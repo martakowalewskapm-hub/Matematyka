@@ -19,9 +19,6 @@ button,input,select{font:inherit}button{cursor:pointer}
 .dashboard{max-width:1100px;margin:30px auto;padding:20px}
 .dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;border-bottom:1px solid var(--line);padding-bottom:20px;flex-wrap:wrap;gap:12px}
 .brand{font-size:22px;font-weight:800;letter-spacing:1px}.brand span{color:var(--gold)}
-.dash-tabs{display:flex;gap:10px}
-.dash-tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:8px 16px;border-radius:8px;font-weight:600}
-.dash-tab.active{border-color:var(--gold);color:var(--gold2);background:#252017}
 
 .folder-section{margin-bottom:35px}
 .folder-title{font-size:18px;color:var(--gold2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
@@ -72,7 +69,7 @@ input,select{background:#101014;border:1px solid var(--line);border-radius:8px;p
 .paper.drag-over{outline:4px dashed var(--gold);outline-offset:-6px}
 canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 
-/* ETUTI STYLE - PŁYWAJĄCY PANEL WZORÓW I PISANIA W LINII */
+/* PŁYWAJĄCY PANEL WZORÓW I PISANIA W LINII */
 .floating-math-toolbar{
   position:absolute;top:15px;left:50%;transform:translateX(-50%);z-index:25;
   background:#1a1a20;border:1px solid var(--gold);border-radius:10px;padding:6px 12px;
@@ -108,17 +105,13 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 <div id="dashboardView" class="view active">
   <div class="dashboard">
     <div class="dash-header">
-      <div class="brand">MATEMATYKA<span>+</span> | Tablice i Materiały</div>
-      <div class="dash-tabs">
-        <button class="dash-tab active" onclick="switchDashTab('teacher')">Panel Nauczyciela</button>
-        <button class="dash-tab" onclick="switchDashTab('student')">Strefa Ucznia</button>
-      </div>
+      <div class="brand" id="dashBrandTitle">MATEMATYKA<span>+</span> | Panel Nauczyciela</div>
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
       <div>
-        <h2 id="dashTitle" style="margin:0;color:var(--gold2)">Panel Nauczyciela</h2>
-        <p style="margin:4px 0 0;color:var(--muted)" id="dashSubtitle">Twórz tablice w folderach i udostępniaj je uczniom jednym kliknięciem.</p>
+        <h2 id="dashTitle" style="margin:0;color:var(--gold2)">Zarządzanie tablicami</h2>
+        <p style="margin:4px 0 0;color:var(--muted)" id="dashSubtitle">Twórz tablice w folderach i udostępniaj je uczniom.</p>
       </div>
       <button class="goldbtn" id="newBoardMainBtn" onclick="openCreateModal()">＋ Utwórz nową tablicę</button>
     </div>
@@ -136,7 +129,7 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
       <input id="newBoardTitle" placeholder="np. Funkcja kwadratowa - zadania maturalne">
     </div>
     <div>
-      <label>Wybierz folder (pojawi się też w Strefie Ucznia)</label>
+      <label>Wybierz folder</label>
       <select id="newBoardFolder">
         <option value="podstawa">📁 Matematyka Podstawowa</option>
         <option value="rozszerzenie">📁 Matematyka Rozszerzona</option>
@@ -155,7 +148,7 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
   <div class="board-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="tool" onclick="goHome()">← Foldery</button>
+        <button class="tool" onclick="goHome()">← Powrót do folderów</button>
         <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="currentBoardTitleHeader">Tablica</div>
         <span style="font-size:12px;color:var(--gold2);background:#262015;padding:3px 8px;border-radius:6px;white-space:nowrap" id="currentBoardFolderBadge">📁 Folder</span>
         <div class="status-pill">
@@ -163,7 +156,7 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
           <span id="liveText">Łączenie...</span>
         </div>
       </div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px" id="boardTopActions">
         <button class="goldbtn" id="copyBoardLinkBtn" style="padding:6px 12px;font-size:13px">📤 Udostępnij uczniowi (Kopiuj link)</button>
       </div>
     </header>
@@ -247,6 +240,8 @@ const DEFAULT_FOLDERS = [
   { id: 'domowe', name: 'Zadania Domowe i Powtórki' }
 ];
 
+let isStudentMode = false;
+
 function getFolderName(folderId){
   const f = DEFAULT_FOLDERS.find(x => x.id === folderId);
   return f ? f.name : 'Matematyka Podstawowa';
@@ -273,7 +268,7 @@ function saveStoredBoards(boards){
   try {
     localStorage.setItem('matplus_boards_v2', JSON.stringify(boards));
   } catch(e) {
-    showToast('⚠ Uwaga: Brak miejsca w pamięci przeglądarki na zapis lokalny dużych zdjęć.');
+    showToast('⚠ Brak miejsca w pamięci przeglądarki.');
   }
 }
 
@@ -282,6 +277,7 @@ function buildShareUrl(board){
   url.searchParams.set('board', board.id);
   url.searchParams.set('title', board.title);
   url.searchParams.set('folder', board.folder);
+  url.searchParams.set('role', 'student'); // Oznaczamy link jako link dla ucznia
   return url.toString();
 }
 
@@ -291,21 +287,22 @@ function copyShareLinkForBoard(boardId){
   if(!b) return;
   const link = buildShareUrl(b);
   navigator.clipboard.writeText(link).then(() => {
-    showToast('✓ Skopiowano link! Tablica zapisze się w folderze ucznia: ' + getFolderName(b.folder));
+    showToast('✓ Skopiowano link dla ucznia!');
   });
 }
 
-let currentTab = 'teacher';
-function switchDashTab(tab){
-  currentTab = tab;
-  document.querySelectorAll('.dash-tab').forEach((el, i) => {
-    el.classList.toggle('active', (i === 0 && tab === 'teacher') || (i === 1 && tab === 'student'));
-  });
-  document.getElementById('dashTitle').textContent = tab === 'teacher' ? 'Panel Nauczyciela' : 'Strefa Ucznia';
-  document.getElementById('dashSubtitle').textContent = tab === 'teacher'
-    ? 'Twórz tablice w folderach i udostępniaj je uczniom jednym kliknięciem.'
-    : 'Wszystkie udostępnione tablice lekcyjne zapisane w odpowiednich folderach.';
-  document.getElementById('newBoardMainBtn').style.display = tab === 'teacher' ? 'inline-block' : 'none';
+function applyRoleUI(){
+  if(isStudentMode){
+    document.getElementById('dashBrandTitle').innerHTML = 'MATEMATYKA<span>+</span> | Strefa Ucznia';
+    document.getElementById('dashTitle').textContent = 'Twoje materiały i tablice z lekcji';
+    document.getElementById('dashSubtitle').textContent = 'Przeglądaj materiały udostępnione przez nauczyciela.';
+    document.getElementById('newBoardMainBtn').style.display = 'none';
+  } else {
+    document.getElementById('dashBrandTitle').innerHTML = 'MATEMATYKA<span>+</span> | Panel Nauczyciela';
+    document.getElementById('dashTitle').textContent = 'Zarządzanie tablicami';
+    document.getElementById('dashSubtitle').textContent = 'Twórz tablice w folderach i udostępniaj je uczniom.';
+    document.getElementById('newBoardMainBtn').style.display = 'inline-block';
+  }
   renderDashboard();
 }
 
@@ -328,8 +325,8 @@ function renderDashboard(){
             <div class="date">Data: ${b.date} • Stron: ${(b.pages || []).length}</div>
             <div class="card-actions">
               <button class="goldbtn" style="padding:6px 12px;font-size:12px;flex:1" onclick="openBoard('${b.id}')">Otwórz tablicę</button>
-              <button class="tool" style="padding:6px 10px;font-size:12px" onclick="copyShareLinkForBoard('${b.id}')" title="Skopiuj link do udostępnienia uczniowi">📤 Udostępnij</button>
-              ${currentTab === 'teacher' ? `<button class="tool" style="padding:6px 10px;font-size:12px;color:var(--red)" onclick="deleteBoard('${b.id}')">✕</button>` : ''}
+              ${!isStudentMode ? `<button class="tool" style="padding:6px 10px;font-size:12px" onclick="copyShareLinkForBoard('${b.id}')" title="Skopiuj link dla ucznia">📤 Udostępnij</button>` : ''}
+              ${!isStudentMode ? `<button class="tool" style="padding:6px 10px;font-size:12px;color:var(--red)" onclick="deleteBoard('${b.id}')">✕</button>` : ''}
             </div>
           </div>
         `).join('')}
@@ -340,6 +337,7 @@ function renderDashboard(){
 }
 
 function openCreateModal(){
+  if(isStudentMode) return;
   document.getElementById('newBoardTitle').value = '';
   document.getElementById('createModal').classList.add('open');
   document.getElementById('newBoardTitle').focus();
@@ -371,6 +369,7 @@ function confirmCreateBoard(){
 }
 
 function deleteBoard(id){
+  if(isStudentMode) return;
   if(confirm('Usunąć tę tablicę?')){
     saveStoredBoards(getStoredBoards().filter(b => b.id !== id));
     renderDashboard();
@@ -379,13 +378,20 @@ function deleteBoard(id){
 
 function goHome(){
   if(peer) peer.destroy();
-  window.history.replaceState({}, '', window.location.pathname);
+  if(isStudentMode){
+    // Uczeń po powrocie zostaje w Strefie Ucznia, usuwamy parametry z URL zachowując rolę
+    const url = new URL(window.location.origin + window.location.pathname);
+    url.searchParams.set('role', 'student');
+    window.history.replaceState({}, '', url);
+  } else {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
   document.getElementById('boardView').classList.remove('active');
   document.getElementById('dashboardView').classList.add('active');
-  renderDashboard();
+  applyRoleUI();
 }
 
-/* TABLICA I PISANIE W STYLU WORD / ETUTI BEZPOŚREDNIE NA PŁÓTNIE */
+/* TABLICA I PISANIE */
 let activeBoardId = null, pages = [], page = 0, tool = 'pen', drawing = false, current = null, remoteActiveItem = null, laserPoints = [], redoStack = [];
 let activeInlineEditor = null;
 
@@ -397,7 +403,7 @@ function openBoard(id, metaFromUrl = null){
   if(!bData){
     bData = {
       id: id,
-      title: metaFromUrl?.title || 'Udostępniona tablica lekcyjna',
+      title: metaFromUrl?.title || 'Tablica lekcyjna',
       folder: DEFAULT_FOLDERS.some(f => f.id === metaFromUrl?.folder) ? metaFromUrl.folder : 'podstawa',
       date: new Date().toISOString().split('T')[0],
       pages: [{id: 'p1', type: 'grid', items: []}],
@@ -405,7 +411,7 @@ function openBoard(id, metaFromUrl = null){
     };
     boards.push(bData);
     saveStoredBoards(boards);
-    showToast('📁 Zapisano tablicę w Twojej Strefie Ucznia (' + getFolderName(bData.folder) + ')');
+    showToast('📁 Zapisano tablicę w Strefie Ucznia (' + getFolderName(bData.folder) + ')');
   } else if(metaFromUrl?.title){
     bData.title = metaFromUrl.title;
     if(DEFAULT_FOLDERS.some(f => f.id === metaFromUrl.folder)) bData.folder = metaFromUrl.folder;
@@ -414,13 +420,20 @@ function openBoard(id, metaFromUrl = null){
 
   document.getElementById('currentBoardTitleHeader').textContent = bData.title;
   document.getElementById('currentBoardFolderBadge').textContent = '📁 ' + getFolderName(bData.folder);
+  
+  // Ukryj przycisk udostępniania dla ucznia
+  document.getElementById('copyBoardLinkBtn').style.display = isStudentMode ? 'none' : 'inline-block';
+
   pages = bData.pages || [{id: 'p1', type: 'grid', items: []}];
   page = bData.currentPage || 0;
 
   document.getElementById('dashboardView').classList.remove('active');
   document.getElementById('boardView').classList.add('active');
 
-  window.history.replaceState({}, '', buildShareUrl(bData));
+  const currentUrl = new URL(window.location.href);
+  currentUrl.searchParams.set('board', id);
+  if(isStudentMode) currentUrl.searchParams.set('role', 'student');
+  window.history.replaceState({}, '', currentUrl.toString());
 
   setTimeout(() => { resizeCanvas(); renderPages(); render(); initLivePeer(id); }, 50);
 }
@@ -437,7 +450,7 @@ function saveCurrentBoardData(){
 }
 
 document.getElementById('copyBoardLinkBtn').onclick = () => {
-  if(activeBoardId) copyShareLinkForBoard(activeBoardId);
+  if(activeBoardId && !isStudentMode) copyShareLinkForBoard(activeBoardId);
 };
 
 const canvas = document.getElementById('whiteboard');
@@ -763,7 +776,7 @@ function handleImageFile(file){
       redoStack = [];
       broadcast({type: 'item_commit', pageIndex: page, item});
       renderPages(); render();
-      showToast('✓ Dodano zrzut ekranu / obraz na tablicę');
+      showToast('✓ Dodano zrzut ekranu');
     };
     img.src = reader.result;
   };
@@ -795,7 +808,7 @@ document.addEventListener('paste', e => {
 
 document.getElementById('pasteBtn').onclick = async () => {
   try {
-    if(!navigator.clipboard || !navigator.clipboard.read){ showToast('Użyj skrótu Ctrl + V bezpośrednio na tablicy.'); return; }
+    if(!navigator.clipboard || !navigator.clipboard.read){ showToast('Użyj Ctrl + V.'); return; }
     const clipboardItems = await navigator.clipboard.read();
     for(const item of clipboardItems){
       const imgType = item.types.find(t => t.startsWith('image/'));
@@ -821,9 +834,7 @@ document.getElementById('downloadBtn').onclick = () => {
   const a = document.createElement('a'); a.download = 'tablica.png'; a.href = canvas.toDataURL('image/png'); a.click();
 };
 
-/* =====================================================================
-   POPRAWIONE LIVE SYNC: OBIE STRONY NATYCHMIAST WYMIENIAJĄ SIĘ DANYMI
-   ===================================================================== */
+/* P2P LIVE SYNC */
 let peer = null, connections = [];
 const remoteCursorEl = document.getElementById('remoteCursor');
 
@@ -835,7 +846,6 @@ function initLivePeer(boardId){
   peer = new Peer(peerId);
   peer.on('open', () => { setLiveStatus('online', 'LIVE (Gotowy)'); });
   peer.on('error', () => {
-    // Jeśli ID jest zajęte przez gospodarza, łączymy się jako klient do tego pokoju
     peer = new Peer();
     peer.on('open', () => { setupConnection(peer.connect(peerId, {reliable: true})); });
   });
@@ -855,7 +865,6 @@ function setupConnection(conn){
   connections.push(conn);
   conn.on('open', () => {
     setLiveStatus('online', 'LIVE (Połączono)');
-    // KLUCZOWA POPRAWKA: Każda strona po połączeniu od razu wysyła swój aktualny stan do drugiej!
     const currentBoard = getStoredBoards().find(b => b.id === activeBoardId);
     conn.send({
       type: 'full_sync',
@@ -911,7 +920,7 @@ function setupConnection(conn){
 
   conn.on('close', () => {
     remoteCursorEl.style.display = 'none';
-    setLiveStatus('waiting', 'Oczekiwanie na uczestnika...');
+    setLiveStatus('waiting', 'Oczekiwanie...');
   });
 }
 
@@ -920,13 +929,19 @@ window.addEventListener('resize', resizeCanvas);
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const boardParam = urlParams.get('board');
+  const roleParam = urlParams.get('role');
+
+  if(roleParam === 'student'){
+    isStudentMode = true;
+  }
+
+  applyRoleUI();
+
   if(boardParam){
     openBoard(boardParam, {
       title: urlParams.get('title'),
       folder: urlParams.get('folder')
     });
-  } else {
-    renderDashboard();
   }
 });
 </script>

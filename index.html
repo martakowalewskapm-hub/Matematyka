@@ -739,12 +739,9 @@ document.getElementById('deletePage').onclick = () => {
   broadcast({type: 'full_sync', pages, page}); renderPages(); render();
 };
 
-/* =====================================================================
-   OBŁSUGA ZRZUTÓW EKRANU (Ctrl+V, Przycisk Wklej, Drag & Drop, Plik)
-   ===================================================================== */
+/* OBŁSUGA ZRZUTÓW EKRANU */
 function handleImageFile(file){
   if(!file) return;
-  // Jeśli plik nie ma typu MIME (zdarza się przy niektórych zrzutach ekranu), sprawdzamy czy da się go wczytać jako obraz
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -768,36 +765,22 @@ function handleImageFile(file){
       renderPages(); render();
       showToast('✓ Dodano zrzut ekranu / obraz na tablicę');
     };
-    img.onerror = () => showToast('⚠ Ten plik nie jest obsługiwanym obrazem.');
     img.src = reader.result;
   };
   reader.readAsDataURL(file);
 }
 
-// 1. Wybór pliku z dysku
 document.getElementById('imageBtn').onclick = () => document.getElementById('imageInput').click();
 document.getElementById('imageInput').onchange = e => { handleImageFile(e.target.files[0]); e.target.value = ''; };
 
-// 2. Wklejanie ze schowka przez Ctrl+V (obsługuje zarówno clipboardData.items jak i clipboardData.files)
 document.addEventListener('paste', e => {
   if(!document.getElementById('boardView').classList.contains('active')) return;
   if(activeInlineEditor && document.activeElement === activeInlineEditor) return;
-
   const cd = e.clipboardData || window.clipboardData;
   if(!cd) return;
-
-  // Sprawdzamy najpierw files (częste przy kopiowaniu pliku obrazu z eksploratora plików)
   if(cd.files && cd.files.length > 0){
-    for(const file of cd.files){
-      if(file.type.startsWith('image/')){
-        e.preventDefault();
-        handleImageFile(file);
-        return;
-      }
-    }
+    for(const file of cd.files){ if(file.type.startsWith('image/')){ e.preventDefault(); handleImageFile(file); return; } }
   }
-
-  // Sprawdzamy items (częste przy Win+Shift+S / PrintScreen / Kopiuj obraz z przeglądarki)
   if(cd.items && cd.items.length > 0){
     for(const item of cd.items){
       if(item.kind === 'file' && item.type.startsWith('image/')){
@@ -810,13 +793,9 @@ document.addEventListener('paste', e => {
   }
 });
 
-// 3. Przycisk "📋 Wklej screen" na pasku narzędzi (używa nowoczesnego Clipboard API)
 document.getElementById('pasteBtn').onclick = async () => {
   try {
-    if(!navigator.clipboard || !navigator.clipboard.read){
-      showToast('Użyj skrótu klawiszowego Ctrl + V bezpośrednio na tablicy.');
-      return;
-    }
+    if(!navigator.clipboard || !navigator.clipboard.read){ showToast('Użyj skrótu Ctrl + V bezpośrednio na tablicy.'); return; }
     const clipboardItems = await navigator.clipboard.read();
     for(const item of clipboardItems){
       const imgType = item.types.find(t => t.startsWith('image/'));
@@ -826,24 +805,15 @@ document.getElementById('pasteBtn').onclick = async () => {
         return;
       }
     }
-    showToast('Brak obrazka w schowku. Zrób najpierw zrzut ekranu (Win+Shift+S).');
-  } catch(err) {
-    showToast('Kliknij na kartkę i wciśnij Ctrl + V, aby wkleić zrzut ekranu.');
-  }
+    showToast('Brak obrazka w schowku.');
+  } catch(err) { showToast('Kliknij na kartkę i wciśnij Ctrl + V.'); }
 };
 
-// 4. Przeciąganie i upuszczanie (Drag & Drop) pliku prosto na tablicę
-paper.addEventListener('dragover', e => {
-  e.preventDefault();
-  paper.classList.add('drag-over');
-});
+paper.addEventListener('dragover', e => { e.preventDefault(); paper.classList.add('drag-over'); });
 paper.addEventListener('dragleave', () => paper.classList.remove('drag-over'));
 paper.addEventListener('drop', e => {
-  e.preventDefault();
-  paper.classList.remove('drag-over');
-  if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0){
-    handleImageFile(e.dataTransfer.files[0]);
-  }
+  e.preventDefault(); paper.classList.remove('drag-over');
+  if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0){ handleImageFile(e.dataTransfer.files[0]); }
 });
 
 document.getElementById('downloadBtn').onclick = () => {
@@ -851,8 +821,10 @@ document.getElementById('downloadBtn').onclick = () => {
   const a = document.createElement('a'); a.download = 'tablica.png'; a.href = canvas.toDataURL('image/png'); a.click();
 };
 
-/* P2P LIVE SYNC + SYNCHRONIZACJA FOLDERÓW */
-let peer = null, connections = [], isHost = false;
+/* =====================================================================
+   POPRAWIONE LIVE SYNC: OBIE STRONY NATYCHMIAST WYMIENIAJĄ SIĘ DANYMI
+   ===================================================================== */
+let peer = null, connections = [];
 const remoteCursorEl = document.getElementById('remoteCursor');
 
 function initLivePeer(boardId){
@@ -861,9 +833,10 @@ function initLivePeer(boardId){
   const peerId = 'matplus-board-' + boardId.toLowerCase();
   
   peer = new Peer(peerId);
-  peer.on('open', () => { isHost = true; setLiveStatus('online', 'LIVE (Gospodarz)'); });
+  peer.on('open', () => { setLiveStatus('online', 'LIVE (Gotowy)'); });
   peer.on('error', () => {
-    isHost = false; peer = new Peer();
+    // Jeśli ID jest zajęte przez gospodarza, łączymy się jako klient do tego pokoju
+    peer = new Peer();
     peer.on('open', () => { setupConnection(peer.connect(peerId, {reliable: true})); });
   });
   peer.on('connection', conn => setupConnection(conn));
@@ -882,16 +855,16 @@ function setupConnection(conn){
   connections.push(conn);
   conn.on('open', () => {
     setLiveStatus('online', 'LIVE (Połączono)');
-    if(isHost){
-      const currentBoard = getStoredBoards().find(b => b.id === activeBoardId);
-      conn.send({
-        type: 'full_sync',
-        pages,
-        page,
-        boardMeta: currentBoard ? { id: currentBoard.id, title: currentBoard.title, folder: currentBoard.folder, date: currentBoard.date } : null
-      });
-    }
+    // KLUCZOWA POPRAWKA: Każda strona po połączeniu od razu wysyła swój aktualny stan do drugiej!
+    const currentBoard = getStoredBoards().find(b => b.id === activeBoardId);
+    conn.send({
+      type: 'full_sync',
+      pages,
+      page,
+      boardMeta: currentBoard ? { id: currentBoard.id, title: currentBoard.title, folder: currentBoard.folder, date: currentBoard.date } : null
+    });
   });
+
   conn.on('data', msg => {
     if(!msg || !msg.type) return;
     if(msg.type === 'cursor'){
@@ -914,8 +887,11 @@ function setupConnection(conn){
     } else if(msg.type === 'paper_type'){
       if(pages[msg.pageIndex]){ pages[msg.pageIndex].type = msg.paperType; if(msg.pageIndex === page) document.getElementById('paperType').value = msg.paperType; renderPages(); render(); }
     } else if(msg.type === 'full_sync'){
-      pages = msg.pages; page = Math.min(msg.page, pages.length - 1);
-      document.getElementById('paperType').value = pages[page].type;
+      if(msg.pages && msg.pages.length > 0){
+        pages = msg.pages; 
+        page = Math.min(msg.page || 0, pages.length - 1);
+        document.getElementById('paperType').value = pages[page].type;
+      }
       if(msg.boardMeta){
         document.getElementById('currentBoardTitleHeader').textContent = msg.boardMeta.title;
         document.getElementById('currentBoardFolderBadge').textContent = '📁 ' + getFolderName(msg.boardMeta.folder);
@@ -932,6 +908,7 @@ function setupConnection(conn){
       renderPages(); render();
     }
   });
+
   conn.on('close', () => {
     remoteCursorEl.style.display = 'none';
     setLiveStatus('waiting', 'Oczekiwanie na uczestnika...');

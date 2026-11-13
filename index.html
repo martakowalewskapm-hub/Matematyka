@@ -3,624 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tablica LIVE | Korepetycje online</title>
+<title>MATEMATYKA+ | Tablice i Strefa Ucznia</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 <style>
-:root{--bg:#0f0f12;--panel:#18181c;--gold:#d6b56d;--gold2:#f0d99e;--muted:#9e9b95;--line:#2e2d33;--white:#f7f5ef;--green:#3fb950}
+:root{--bg:#0f0f12;--panel:#18181c;--panel2:#212127;--gold:#d6b56d;--gold2:#f0d99e;--muted:#9e9b95;--line:#2e2d33;--white:#f7f5ef;--green:#3fb950;--red:#f85149}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--white);font:14px/1.4 Inter,system-ui,-apple-system,sans-serif;overflow:hidden}
+body{margin:0;background:var(--bg);color:var(--white);font:14px/1.4 Inter,system-ui,-apple-system,sans-serif}
 button,input,select{font:inherit}button{cursor:pointer}
 
-/* GÓRNY PASEK SESJI LIVE */
-.topbar{height:56px;background:#131317;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:12px}
-.brand{font-weight:800;letter-spacing:1.5px;font-size:16px;display:flex;align-items:center;gap:10px}
+/* WIDOKI (PANEL / TABLICA) */
+.view{display:none}.view.active{display:block}
+
+/* DASHBOARD / PANEL GŁÓWNY */
+.dashboard{max-width:1100px;margin:30px auto;padding:20px}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;border-bottom:1px solid var(--line);padding-bottom:20px}
+.brand{font-size:22px;font-weight:800;letter-spacing:1px}
 .brand span{color:var(--gold)}
-.status-pill{display:flex;align-items:center;gap:8px;background:#1c1c21;border:1px solid var(--line);padding:5px 12px;border-radius:20px;font-size:13px;font-weight:500}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
-.dot.online{background:var(--green);box-shadow:0 0 8px var(--green)}
+.dash-tabs{display:flex;gap:10px}
+.dash-tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:8px 16px;border-radius:8px;font-weight:600}
+.dash-tab.active{border-color:var(--gold);color:var(--gold2);background:#252017}
+
+.folder-section{margin-bottom:35px}
+.folder-title{font-size:18px;color:var(--gold2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.boards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:15px}
+.board-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:.15s}
+.board-card:hover{border-color:#554c38;transform:translateY(-2px)}
+.board-card h4{margin:0;font-size:16px;color:var(--white)}
+.board-card .date{font-size:12px;color:var(--muted)}
+.card-actions{display:flex;gap:8px;margin-top:auto}
+
+.goldbtn{background:var(--gold);color:#17130b;border:0;border-radius:8px;padding:8px 16px;font-weight:700}
+.goldbtn:hover{background:var(--gold2)}
+.tool{background:#242429;border:1px solid #3a3940;color:#eee;padding:7px 12px;border-radius:8px;font-size:13px}
+.tool:hover{background:#2f2f36;border-color:#5b5963}
+.tool.active{border-color:var(--gold);color:var(--gold2);background:#302719}
+
+/* EDYTOR TABLICY LIVE */
+.board-shell{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:54px;background:#131317;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.status-pill{display:flex;align-items:center;gap:6px;background:#1c1c21;border:1px solid var(--line);padding:4px 10px;border-radius:20px;font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
 .dot.waiting{background:var(--gold);animation:pulse 1.4s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-.session-controls{display:flex;align-items:center;gap:8px}
-.goldbtn{background:var(--gold);color:#17130b;border:0;border-radius:8px;padding:7px 14px;font-weight:700}
-.goldbtn:hover{background:var(--gold2)}
-.tool{background:#242429;border:1px solid #3a3940;color:#eee;padding:6px 11px;border-radius:8px;font-size:13px;transition:.12s}
-.tool:hover:not(:disabled){background:#2f2f36;border-color:#5b5963}
-.tool.active{border-color:var(--gold);color:var(--gold2);background:#302719}
-.tool:disabled{opacity:.35;cursor:not-allowed}
-input,select{background:#101014;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--white);outline:none}
-input:focus,select:focus{border-color:var(--gold)}
-.room-badge{background:#262015;border:1px dashed var(--gold);color:var(--gold2);padding:5px 10px;border-radius:7px;font-family:monospace;font-weight:700;font-size:14px}
-
-/* PASEK NARZĘDZI RYSOWANIA */
-.toolbar{height:48px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 16px;overflow-x:auto}
-.sep{width:1px;height:24px;background:var(--line);margin:0 4px}
+.toolbar{height:46px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 16px;overflow-x:auto}
+.sep{width:1px;height:22px;background:var(--line);margin:0 4px}
 .lbl{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:12px}
+input,select{background:#101014;border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--white);outline:none}
 
-/* OBSZAR ROBOCZY */
-.workspace{display:grid;grid-template-columns:1fr 180px;height:calc(100vh - 104px)}
-.canvas-area{padding:12px;background:#0d0d10;display:flex;align-items:stretch;justify-content:center;overflow:hidden}
-.paper{background:#fff;width:100%;height:100%;border-radius:6px;position:relative;box-shadow:0 8px 30px rgba(0,0,0,.6);overflow:hidden}
+.workspace{display:grid;grid-template-columns:1fr 185px;flex:1;overflow:hidden}
+.canvas-area{padding:10px;background:#0d0d10;display:flex;align-items:stretch;justify-content:center;overflow:hidden}
+.paper{background:#fff;width:100%;height:100%;border-radius:6px;position:relative;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
 canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 
-/* ŻYWY KURSOR DRUGIEJ OSOBY */
-.remote-cursor{position:absolute;pointer-events:none;z-index:15;transform:translate(-2px,-2px);transition:left .04s linear,top .04s linear;display:none}
-.remote-cursor svg{width:18px;height:18px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
-.remote-label{background:var(--gold);color:#14110a;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap;margin-left:10px;margin-top:-4px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+/* WBUDOWANY EDYTOR WZORÓW */
+.math-editor-box{position:absolute;z-index:30;background:#18181d;border:2px solid var(--gold);border-radius:10px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);width:310px;display:none;flex-direction:column;gap:8px}
+.math-editor-box textarea{width:100%;background:#101013;border:1px solid var(--line);color:var(--white);padding:8px;border-radius:6px;resize:vertical;min-height:65px;font-family:monospace;font-size:14px;outline:none}
+.math-sym-row{display:flex;gap:4px;flex-wrap:wrap}
+.math-sym-btn{background:#25252b;border:1px solid #3c3b42;color:#f0d99e;padding:3px 6px;border-radius:4px;font-size:11px;font-weight:bold}
+.math-sym-btn:hover{background:#33333d}
+.math-preview{background:#fff;color:#111;padding:6px;border-radius:4px;min-height:28px;font-size:15px;overflow-x:auto}
+.board-math-item{position:absolute;z-index:5;padding:4px 8px;border-radius:4px;pointer-events:none;font-size:18px;background:rgba(255,255,255,0.92);box-shadow:0 2px 8px rgba(0,0,0,0.1);color:#111}
 
-/* PASEK KART ZESZYTU */
+.remote-cursor{position:absolute;pointer-events:none;z-index:15;transform:translate(-2px,-2px);transition:left .04s linear,top .04s linear;display:none}
+.remote-cursor svg{width:16px;height:16px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.remote-label{background:var(--gold);color:#14110a;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;margin-left:8px;margin-top:-3px}
+
 .sidebar{background:#151519;border-left:1px solid var(--line);padding:12px;display:flex;flex-direction:column;justify-content:space-between}
 .sidebar h3{margin:0 0 8px;font-size:12px;color:var(--muted);letter-spacing:.8px}
-.page-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;max-height:calc(100vh - 280px)}
-.page-thumb{background:#202026;border:1px solid var(--line);color:#ddd;padding:8px 10px;border-radius:8px;text-align:left;font-size:13px}
+.page-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;max-height:calc(100vh - 240px)}
+.page-thumb{background:#202026;border:1px solid var(--line);color:#ddd;padding:8px;border-radius:8px;text-align:left;font-size:12px}
 .page-thumb.active{border-color:var(--gold);color:var(--gold2);background:#292318}
-.page-thumb small{display:block;color:var(--muted);font-size:11px}
-
-@media(max-width:768px){
-  html,body{overflow:auto}
-  .topbar,.toolbar{height:auto;flex-wrap:wrap;padding:8px 12px}
-  .workspace{grid-template-columns:1fr;height:auto}
-  .canvas-area{height:70vh}
-  .sidebar{border-left:0;border-top:1px solid var(--line)}
-  .page-list{flex-direction:row;max-height:none}
-}
+.page-thumb small{display:block;color:var(--muted);font-size:10px}
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand">
-    <div>TABLICA<span>+</span></div>
-    <div class="status-pill">
-      <span class="dot" id="liveDot"></span>
-      <span id="liveText">Tryb lokalny</span>
-    </div>
-  </div>
-
-  <div class="session-controls">
-    <input id="userNameInput" value="Nauczyciel" placeholder="Twoje imię" style="width:115px" title="Twój podpis przy kursorze">
-    <button class="goldbtn" id="createRoomBtn">● Utwórz pokój</button>
-    <span id="roomCodeWrap" style="display:none;align-items:center;gap:6px">
-      <span class="room-badge" id="roomCodeDisplay">---</span>
-      <button class="tool" id="copyLinkBtn">🔗 Kopiuj link dla ucznia</button>
-    </span>
-    <span class="sep"></span>
-    <input id="joinCodeInput" placeholder="Kod pokoju" style="width:115px;text-transform:uppercase">
-    <button class="tool" id="joinRoomBtn">Dołącz</button>
-  </div>
-</header>
-
-<div class="toolbar">
-  <button class="tool active" id="penBtn">✎ Pisak</button>
-  <button class="tool" id="laserBtn">◎ Laser</button>
-  <button class="tool" id="eraserBtn">⌫ Gumka</button>
-  <button class="tool" id="lineBtn">╱ Linia</button>
-  <button class="tool" id="rectBtn">▢ Prostokąt</button>
-  <button class="tool" id="ellipseBtn">◯ Okrąg</button>
-  <button class="tool" id="textBtn">T Tekst</button>
-  <span class="sep"></span>
-  <label class="lbl">Kolor <input id="ink" type="color" value="#171717" style="width:32px;height:28px;padding:1px"></label>
-  <label class="lbl">Grubość <input id="width" type="range" min="1" max="16" value="3" style="width:70px"></label>
-  <label class="lbl">Kartka
-    <select id="paperType" style="padding:4px 8px">
-      <option value="grid" selected>W kratkę</option>
-      <option value="plain">Czysta</option>
-      <option value="lined">W linie</option>
-    </select>
-  </label>
-  <span class="sep"></span>
-  <button class="tool" id="undoBtn" title="Ctrl+Z">↶ Cofnij</button>
-  <button class="tool" id="redoBtn" title="Ctrl+Y">↷ Ponów</button>
-  <button class="tool" id="clearBtn">Wyczyść</button>
-  <span class="sep"></span>
-  <button class="tool" id="imageBtn">＋ Zdjęcie (lub Ctrl+V)</button>
-  <input id="imageInput" type="file" accept="image/*" hidden>
-  <button class="tool" id="downloadBtn">↓ Zapisz PNG</button>
-</div>
-
-<div class="workspace">
-  <div class="canvas-area">
-    <div class="paper" id="paperBox">
-      <canvas id="whiteboard"></canvas>
-      <div class="remote-cursor" id="remoteCursor">
-        <svg viewBox="0 0 24 24" fill="#d6b56d" stroke="#111" stroke-width="1.5"><path d="M4 2l16 10-7 2-3 7z"/></svg>
-        <div class="remote-label" id="remoteCursorLabel">Uczeń</div>
-      </div>
-    </div>
-  </div>
-
-  <aside class="sidebar">
-    <div>
-      <h3>STRONY ZESZYTU</h3>
-      <div class="page-list" id="pageList"></div>
-      <button class="goldbtn" id="addPage" style="width:100%;margin-top:10px">＋ Nowa strona</button>
-      <button class="tool" id="duplicatePage" style="width:100%;margin-top:6px">Duplikuj stronę</button>
-      <button class="tool" id="deletePage" style="width:100%;margin-top:6px">Usuń stronę</button>
-    </div>
-    <div style="font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px" id="participantsInfo">
-      Kliknij <b>„Utwórz pokój”</b>, skopiuj link i wyślij uczniowi.
-    </div>
-  </aside>
-</div>
-
-<script>
-const canvas = document.getElementById('whiteboard');
-const ctx = canvas.getContext('2d');
-const paper = document.getElementById('paperBox');
-const imageCache = new Map();
-
-let pages = [{id: uid(), type: 'grid', items: []}];
-let page = 0;
-let tool = 'pen';
-let drawing = false;
-let current = null;
-let remoteActiveItem = null;
-let laserPoints = [];
-let redoStack = [];
-
-function uid(){ return Math.random().toString(36).slice(2, 10); }
-const dpr = () => window.devicePixelRatio || 1;
-function dimensions(){ return {w: Math.max(300, paper.clientWidth), h: Math.max(300, paper.clientHeight)}; }
-
-function resizeCanvas(){
-  const {w, h} = dimensions();
-  canvas.width = w * dpr();
-  canvas.height = h * dpr();
-  ctx.setTransform(dpr(), 0, 0, dpr(), 0, 0);
-  render();
-}
-
-function drawPaper(type){
-  const {w, h} = dimensions();
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, w, h);
-  ctx.save();
-  ctx.strokeStyle = '#e5e8ed';
-  ctx.lineWidth = 1;
-  if(type === 'grid'){
-    for(let x = 24; x < w; x += 24){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
-    for(let y = 24; y < h; y += 24){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
-  } else if(type === 'lined'){
-    for(let y = 32; y < h; y += 30){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
-  }
-  ctx.restore();
-}
-
-function render(){
-  const {w, h} = dimensions();
-  ctx.clearRect(0, 0, w, h);
-  if(!pages[page]) page = 0;
-  drawPaper(pages[page].type);
-  pages[page].items.forEach(drawItem);
-  if(current) drawItem(current);
-  if(remoteActiveItem) drawItem(remoteActiveItem);
-  drawLaser();
-  document.getElementById('undoBtn').disabled = !pages[page].items.length;
-  document.getElementById('redoBtn').disabled = !redoStack.length;
-}
-
-function drawItem(item){
-  const {w, h} = dimensions();
-  ctx.save();
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  if(item.kind === 'stroke'){
-    ctx.strokeStyle = item.color;
-    ctx.lineWidth = item.width;
-    ctx.beginPath();
-    item.points.forEach((p, i) => {
-      const px = p.nx * w, py = p.ny * h;
-      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-    });
-    if(item.points.length === 1) ctx.lineTo(item.points[0].nx * w + 0.1, item.points[0].ny * h + 0.1);
-    ctx.stroke();
-  } else if(item.kind === 'shape'){
-    ctx.strokeStyle = item.color;
-    ctx.lineWidth = item.width;
-    const x1 = item.nx1 * w, y1 = item.ny1 * h, x2 = item.nx2 * w, y2 = item.ny2 * h;
-    const x = Math.min(x1, x2), y = Math.min(y1, y2), sw = Math.abs(x2 - x1), sh = Math.abs(y2 - y1);
-    ctx.beginPath();
-    if(item.shape === 'line'){ ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); }
-    if(item.shape === 'rect'){ ctx.rect(x, y, sw, sh); }
-    if(item.shape === 'ellipse'){ ctx.ellipse((x1+x2)/2, (y1+y2)/2, Math.max(1, sw/2), Math.max(1, sh/2), 0, 0, Math.PI*2); }
-    ctx.stroke();
-  } else if(item.kind === 'text'){
-    ctx.fillStyle = item.color;
-    ctx.font = `600 ${item.size || 20}px Inter, Arial, sans-serif`;
-    ctx.fillText(item.text, item.nx * w, item.ny * h);
-  } else if(item.kind === 'image' && item.src){
-    let img = imageCache.get(item.src);
-    if(!img){
-      img = new Image();
-      img.onload = () => render();
-      img.src = item.src;
-      imageCache.set(item.src, img);
-    }
-    if(img.complete && img.naturalWidth > 0) ctx.drawImage(img, item.nx * w, item.ny * h, item.nw * w, item.nh * h);
-  }
-  ctx.restore();
-}
-
-function drawLaser(){
-  if(!laserPoints.length) return;
-  const now = Date.now();
-  laserPoints = laserPoints.filter(p => now - p.t < 750);
-  if(!laserPoints.length) return;
-  const {w, h} = dimensions();
-  ctx.save();
-  for(let i = 1; i < laserPoints.length; i++){
-    const p0 = laserPoints[i-1], p1 = laserPoints[i];
-    const alpha = Math.max(0, 1 - (now - p1.t) / 750);
-    ctx.strokeStyle = `rgba(240, 50, 50, ${alpha})`;
-    ctx.lineWidth = 5 * alpha + 1;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(p0.nx * w, p0.ny * h);
-    ctx.lineTo(p1.nx * w, p1.ny * h);
-    ctx.stroke();
-  }
-  const last = laserPoints[laserPoints.length - 1];
-  ctx.fillStyle = '#ff2a2a';
-  ctx.beginPath();
-  ctx.arc(last.nx * w, last.ny * h, 5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-  requestAnimationFrame(render);
-}
-
-function normPoint(e){
-  const r = canvas.getBoundingClientRect();
-  return {
-    nx: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)),
-    ny: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))
-  };
-}
-
-function setTool(t){
-  tool = t;
-  ['pen','laser','eraser','line','rect','ellipse','text'].forEach(k => {
-    document.getElementById(k + 'Btn').classList.toggle('active', t === k);
-  });
-  canvas.style.cursor = t === 'text' ? 'text' : t === 'eraser' ? 'cell' : t === 'laser' ? 'pointer' : 'crosshair';
-}
-
-const getColor = () => document.getElementById('ink').value;
-const getWidth = () => +document.getElementById('width').value;
-const getUserName = () => (document.getElementById('userNameInput').value.trim() || 'Uczestnik');
-
-let lastCursorSent = 0;
-
-canvas.addEventListener('pointerdown', e => {
-  const p = normPoint(e);
-  if(tool === 'laser'){
-    drawing = true;
-    canvas.setPointerCapture(e.pointerId);
-    laserPoints.push({...p, t: Date.now()});
-    broadcast({type: 'laser', nx: p.nx, ny: p.ny});
-    render();
-    return;
-  }
-  if(tool === 'text'){
-    const value = prompt('Wpisz tekst lub wzór:');
-    if(value){
-      const item = {id: uid(), kind: 'text', text: value, nx: p.nx, ny: p.ny, color: getColor(), size: 20};
-      pages[page].items.push(item);
-      redoStack = [];
-      broadcast({type: 'item_commit', pageIndex: page, item});
-      render();
-    }
-    return;
-  }
-  drawing = true;
-  canvas.setPointerCapture(e.pointerId);
-  if(tool === 'pen' || tool === 'eraser'){
-    current = {
-      id: uid(),
-      kind: 'stroke',
-      color: tool === 'eraser' ? '#ffffff' : getColor(),
-      width: tool === 'eraser' ? getWidth() * 5 : getWidth(),
-      points: [p]
-    };
-  } else {
-    current = {
-      id: uid(),
-      kind: 'shape',
-      shape: tool,
-      color: getColor(),
-      width: getWidth(),
-      nx1: p.nx, ny1: p.ny, nx2: p.nx, ny2: p.ny
-    };
-  }
-  broadcast({type: 'item_progress', pageIndex: page, item: current});
-  render();
-});
-
-canvas.addEventListener('pointermove', e => {
-  const p = normPoint(e);
-  const now = Date.now();
-  if(now - lastCursorSent > 33){
-    lastCursorSent = now;
-    broadcast({type: 'cursor', nx: p.nx, ny: p.ny, name: getUserName()});
-  }
-  if(!drawing) return;
-  if(tool === 'laser'){
-    laserPoints.push({...p, t: now});
-    broadcast({type: 'laser', nx: p.nx, ny: p.ny});
-    render();
-    return;
-  }
-  if(!current) return;
-  if(current.kind === 'stroke') current.points.push(p);
-  else { current.nx2 = p.nx; current.ny2 = p.ny; }
-  broadcast({type: 'item_progress', pageIndex: page, item: current});
-  render();
-});
-
-function finishDraw(){
-  if(!drawing) return;
-  drawing = false;
-  if(current){
-    pages[page].items.push(current);
-    redoStack = [];
-    broadcast({type: 'item_commit', pageIndex: page, item: current});
-    current = null;
-  }
-  renderPages();
-  render();
-}
-canvas.addEventListener('pointerup', finishDraw);
-canvas.addEventListener('pointercancel', finishDraw);
-
-function renderPages(){
-  const list = document.getElementById('pageList');
-  list.innerHTML = '';
-  pages.forEach((p, i) => {
-    const b = document.createElement('button');
-    b.className = 'page-thumb' + (i === page ? ' active' : '');
-    b.innerHTML = `Strona ${i + 1}<small>${({plain:'czysta',grid:'kratka',lined:'linie'}[p.type])} • ${p.items.length} el.</small>`;
-    b.onclick = () => {
-      page = i;
-      document.getElementById('paperType').value = p.type;
-      broadcast({type: 'page_switch', pageIndex: page});
-      renderPages();
-      render();
-    };
-    list.appendChild(b);
-  });
-}
-
-/* PRZYCISKI */
-document.getElementById('penBtn').onclick = () => setTool('pen');
-document.getElementById('laserBtn').onclick = () => setTool('laser');
-document.getElementById('eraserBtn').onclick = () => setTool('eraser');
-document.getElementById('lineBtn').onclick = () => setTool('line');
-document.getElementById('rectBtn').onclick = () => setTool('rect');
-document.getElementById('ellipseBtn').onclick = () => setTool('ellipse');
-document.getElementById('textBtn').onclick = () => setTool('text');
-
-document.getElementById('paperType').onchange = e => {
-  pages[page].type = e.target.value;
-  broadcast({type: 'paper_type', pageIndex: page, paperType: e.target.value});
-  renderPages();
-  render();
-};
-
-function undoAction(){
-  const item = pages[page].items.pop();
-  if(item){ redoStack.push(item); broadcast({type: 'full_sync', pages, page}); renderPages(); render(); }
-}
-function redoAction(){
-  const item = redoStack.pop();
-  if(item){ pages[page].items.push(item); broadcast({type: 'full_sync', pages, page}); renderPages(); render(); }
-}
-document.getElementById('undoBtn').onclick = undoAction;
-document.getElementById('redoBtn').onclick = redoAction;
-document.addEventListener('keydown', e => {
-  if(e.target.tagName === 'INPUT') return;
-  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); undoAction(); }
-  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redoAction(); }
-});
-
-document.getElementById('clearBtn').onclick = () => {
-  if(confirm('Wyczyścić bieżącą stronę dla wszystkich?')){
-    pages[page].items = []; redoStack = [];
-    broadcast({type: 'full_sync', pages, page});
-    renderPages(); render();
-  }
-};
-
-document.getElementById('addPage').onclick = () => {
-  pages.push({id: uid(), type: document.getElementById('paperType').value, items: []});
-  page = pages.length - 1; redoStack = [];
-  broadcast({type: 'full_sync', pages, page});
-  renderPages(); render();
-};
-document.getElementById('duplicatePage').onclick = () => {
-  const copy = JSON.parse(JSON.stringify(pages[page]));
-  copy.id = uid();
-  pages.splice(page + 1, 0, copy);
-  page++;
-  broadcast({type: 'full_sync', pages, page});
-  renderPages(); render();
-};
-document.getElementById('deletePage').onclick = () => {
-  if(pages.length === 1){ alert('Musi pozostać przynajmniej jedna strona.'); return; }
-  if(confirm('Usunąć tę stronę?')){
-    pages.splice(page, 1); page = Math.max(0, page - 1);
-    document.getElementById('paperType').value = pages[page].type;
-    broadcast({type: 'full_sync', pages, page});
-    renderPages(); render();
-  }
-};
-
-document.getElementById('downloadBtn').onclick = () => {
-  const a = document.createElement('a');
-  a.download = 'tablica-strona-' + (page + 1) + '.png';
-  a.href = canvas.toDataURL('image/png');
-  a.click();
-};
-
-/* ZDJĘCIA I WKLEJANIE CTRL+V */
-function handleImageFile(file){
-  if(!file || !file.type.startsWith('image/')) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const img = new Image();
-    img.onload = () => {
-      const maxDim = 1100;
-      let tw = img.width, th = img.height;
-      if(tw > maxDim || th > maxDim){
-        const r = Math.min(maxDim / tw, maxDim / th);
-        tw = Math.round(tw * r); th = Math.round(th * r);
-      }
-      const off = document.createElement('canvas');
-      off.width = tw; off.height = th;
-      off.getContext('2d').drawImage(img, 0, 0, tw, th);
-      const src = off.toDataURL('image/jpeg', 0.85);
-      const {w, h} = dimensions();
-      const fit = Math.min((w * 0.75) / tw, (h * 0.75) / th, 1);
-      const item = {id: uid(), kind: 'image', src, nx: 0.04, ny: 0.04, nw: (tw * fit) / w, nh: (th * fit) / h};
-      pages[page].items.push(item);
-      broadcast({type: 'item_commit', pageIndex: page, item});
-      renderPages(); render();
-    };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file);
-}
-document.getElementById('imageBtn').onclick = () => document.getElementById('imageInput').click();
-document.getElementById('imageInput').onchange = e => { handleImageFile(e.target.files[0]); e.target.value = ''; };
-window.addEventListener('paste', e => {
-  for(const it of (e.clipboardData?.items || [])){
-    if(it.type.startsWith('image/')){ handleImageFile(it.getAsFile()); break; }
-  }
-});
-
-/* POŁĄCZENIA LIVE (PeerJS WebRTC) */
-let peer = null, connections = [], isHost = false, currentRoomCode = null, cursorHideTimer = null;
-const remoteCursorEl = document.getElementById('remoteCursor');
-const remoteCursorLabel = document.getElementById('remoteCursorLabel');
-
-function setLiveUI(state, text, roomCode = ''){
-  document.getElementById('liveDot').className = 'dot ' + (state === 'online' ? 'online' : state === 'waiting' ? 'waiting' : '');
-  document.getElementById('liveText').textContent = text;
-  if(roomCode){
-    document.getElementById('roomCodeWrap').style.display = 'inline-flex';
-    document.getElementById('roomCodeDisplay').textContent = roomCode;
-  }
-}
-
-function updateParticipantsUI(){
-  const active = connections.filter(c => c.open);
-  const info = document.getElementById('participantsInfo');
-  if(!active.length){
-    info.innerHTML = currentRoomCode ? `Pokój <b>${currentRoomCode}</b> aktywny. Oczekiwanie na ucznia...` : 'Kliknij <b>„Utwórz pokój”</b>, aby udostępnić tablicę.';
-    if(currentRoomCode) setLiveUI('waiting', 'Oczekiwanie na ucznia...', currentRoomCode);
-  } else {
-    info.innerHTML = `<span style="color:var(--green)">● Połączono na żywo</span> (${active.length} os. w pokoju).`;
-    setLiveUI('online', 'LIVE — Połączono na żywo', currentRoomCode);
-  }
-}
-
-function broadcast(msg){
-  connections.forEach(c => { if(c && c.open) try{ c.send(msg); }catch(e){} });
-}
-
-function setupConnection(conn){
-  connections.push(conn);
-  conn.on('open', () => {
-    updateParticipantsUI();
-    if(isHost) conn.send({type: 'full_sync', pages, page});
-  });
-  conn.on('data', msg => {
-    if(!msg || !msg.type) return;
-    if(msg.type === 'cursor'){
-      const {w, h} = dimensions();
-      remoteCursorEl.style.display = 'block';
-      remoteCursorEl.style.left = (msg.nx * w) + 'px';
-      remoteCursorEl.style.top = (msg.ny * h) + 'px';
-      remoteCursorLabel.textContent = msg.name || 'Uczeń';
-      clearTimeout(cursorHideTimer);
-      cursorHideTimer = setTimeout(() => remoteCursorEl.style.display = 'none', 3500);
-    } else if(msg.type === 'laser'){
-      laserPoints.push({nx: msg.nx, ny: msg.ny, t: Date.now()}); render();
-    } else if(msg.type === 'item_progress'){
-      if(msg.pageIndex === page){ remoteActiveItem = msg.item; render(); }
-    } else if(msg.type === 'item_commit'){
-      remoteActiveItem = null;
-      if(pages[msg.pageIndex] && !pages[msg.pageIndex].items.some(x => x.id === msg.item.id)){
-        pages[msg.pageIndex].items.push(msg.item);
-      }
-      renderPages(); render();
-    } else if(msg.type === 'page_switch'){
-      if(pages[msg.pageIndex]){ page = msg.pageIndex; document.getElementById('paperType').value = pages[page].type; renderPages(); render(); }
-    } else if(msg.type === 'paper_type'){
-      if(pages[msg.pageIndex]){ pages[msg.pageIndex].type = msg.paperType; if(msg.pageIndex === page) document.getElementById('paperType').value = msg.paperType; renderPages(); render(); }
-    } else if(msg.type === 'full_sync'){
-      pages = msg.pages; page = Math.min(msg.page, pages.length - 1);
-      document.getElementById('paperType').value = pages[page].type;
-      renderPages(); render();
-    }
-  });
-  conn.on('close', () => {
-    connections = connections.filter(c => c !== conn);
-    remoteCursorEl.style.display = 'none';
-    updateParticipantsUI();
-  });
-}
-
-document.getElementById('createRoomBtn').onclick = () => {
-  if(peer) peer.destroy();
-  connections = []; isHost = true;
-  const code = 'MAT-' + Math.floor(1000 + Math.random() * 9000);
-  currentRoomCode = code;
-  setLiveUI('waiting', 'Tworzenie pokoju...', code);
-  peer = new Peer('matplus-' + code.toLowerCase());
-  peer.on('open', () => {
-    updateParticipantsUI();
-    const url = new URL(window.location.href);
-    url.searchParams.set('room', code);
-    window.history.replaceState({}, '', url);
-  });
-  peer.on('connection', conn => setupConnection(conn));
-  peer.on('error', err => setLiveUI('offline', 'Błąd: ' + err.type));
-};
-
-function joinRoom(rawCode){
-  const code = rawCode.trim().toUpperCase();
-  if(!code) return;
-  if(peer) peer.destroy();
-  connections = []; isHost = false; currentRoomCode = code;
-  if(document.getElementById('userNameInput').value === 'Nauczyciel') document.getElementById('userNameInput').value = 'Uczeń';
-  setLiveUI('waiting', 'Łączenie z ' + code + '...', code);
-  peer = new Peer();
-  peer.on('open', () => setupConnection(peer.connect('matplus-' + code.toLowerCase(), {reliable: true})));
-  peer.on('error', err => setLiveUI('offline', 'Nie znaleziono pokoju ' + code));
-}
-
-document.getElementById('joinRoomBtn').onclick = () => joinRoom(document.getElementById('joinCodeInput').value);
-
-document.getElementById('copyLinkBtn').onclick = () => {
-  const url = new URL(window.location.href);
-  url.searchParams.set('room', currentRoomCode);
-  navigator.clipboard.writeText(url.toString()).then(() => {
-    const btn = document.getElementById('copyLinkBtn');
-    btn.textContent = '✓ Skopiowano link!';
-    setTimeout(() => btn.textContent = '🔗 Kopiuj link dla ucznia', 2200);
-  });
-};
-
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-renderPages();
-setTool('pen');
-
-const urlRoom = new URLSearchParams(window.location.search).get('room');
-if(urlRoom){
-  document.getElementById('joinCodeInput').value = urlRoom;
-  setTimeout(() => joinRoom(urlRoom), 250);
-}
-</script>
-</body>
-</html>
+<!-- ================= PANEL / DASHBOARD ================= -->
+<div id="dashboardView" class="view active">
+  <div class="dashboard">
+    <div class="dash-header">
+      <div class="brand">MATEMATYKA<span>+</span> | Panel Korepetytora i Ucznia</div>
+      <div class="dash-tabs">
+        <button class="dash-tab active" onclick="switchDashTab('teacher')">Panel

@@ -68,7 +68,8 @@ input,select{background:#101014;border:1px solid var(--line);border-radius:8px;p
 
 .workspace{display:grid;grid-template-columns:1fr 185px;flex:1;overflow:hidden}
 .canvas-area{padding:10px;background:#0d0d10;display:flex;align-items:stretch;justify-content:center;overflow:hidden}
-.paper{background:#fff;width:100%;height:100%;border-radius:6px;position:relative;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
+.paper{background:#fff;width:100%;height:100%;border-radius:6px;position:relative;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden;transition:outline .15s}
+.paper.drag-over{outline:4px dashed var(--gold);outline-offset:-6px}
 canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 
 /* ETUTI STYLE - PŁYWAJĄCY PANEL WZORÓW I PISANIA W LINII */
@@ -190,7 +191,8 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
       <button class="tool" id="redoBtn">↷ Ponów</button>
       <button class="tool" id="clearBtn">Wyczyść</button>
       <span class="sep"></span>
-      <button class="tool" id="imageBtn">＋ Zdjęcie</button>
+      <button class="tool" id="imageBtn" title="Wybierz plik z dysku">＋ Zdjęcie</button>
+      <button class="tool" id="pasteBtn" title="Wklej zrzut ekranu ze schowka (Ctrl+V)">📋 Wklej screen</button>
       <input id="imageInput" type="file" accept="image/*" hidden>
       <button class="tool" id="downloadBtn">↓ Zapisz PNG</button>
     </div>
@@ -229,7 +231,7 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
           <button class="tool" id="deletePage" style="width:100%;margin-top:5px">Usuń</button>
         </div>
         <div style="font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px">
-          Tablica zapisuje się automatycznie w folderze nauczyciela i ucznia.
+          Możesz też przeciągnąć i upuścić zrzut ekranu prosto na kartkę.
         </div>
       </aside>
     </div>
@@ -268,10 +270,13 @@ function getStoredBoards(){
 }
 
 function saveStoredBoards(boards){
-  localStorage.setItem('matplus_boards_v2', JSON.stringify(boards));
+  try {
+    localStorage.setItem('matplus_boards_v2', JSON.stringify(boards));
+  } catch(e) {
+    showToast('⚠ Uwaga: Brak miejsca w pamięci przeglądarki na zapis lokalny dużych zdjęć.');
+  }
 }
 
-/* GENEROWANIE LINKU Z METADANYMI (ID + TYTUŁ + FOLDER) ABY UCZEŃ WIDZIAŁ TABLICĘ W SWOIM FOLDERZE */
 function buildShareUrl(board){
   const url = new URL(window.location.origin + window.location.pathname);
   url.searchParams.set('board', board.id);
@@ -286,7 +291,7 @@ function copyShareLinkForBoard(boardId){
   if(!b) return;
   const link = buildShareUrl(b);
   navigator.clipboard.writeText(link).then(() => {
-    showToast('✓ Skopiowano link! Po otwarciu tablica zapisze się w folderze ucznia: ' + getFolderName(b.folder));
+    showToast('✓ Skopiowano link! Tablica zapisze się w folderze ucznia: ' + getFolderName(b.folder));
   });
 }
 
@@ -389,7 +394,6 @@ function openBoard(id, metaFromUrl = null){
   let boards = getStoredBoards();
   let bData = boards.find(b => b.id === id);
 
-  // Jeśli uczeń otwiera link do tablicy pierwszy raz, automatycznie zapisujemy ją w jego folderze!
   if(!bData){
     bData = {
       id: id,
@@ -403,7 +407,6 @@ function openBoard(id, metaFromUrl = null){
     saveStoredBoards(boards);
     showToast('📁 Zapisano tablicę w Twojej Strefie Ucznia (' + getFolderName(bData.folder) + ')');
   } else if(metaFromUrl?.title){
-    // Aktualizacja tytułu/folderu jeśli zmieniły się w linku
     bData.title = metaFromUrl.title;
     if(DEFAULT_FOLDERS.some(f => f.id === metaFromUrl.folder)) bData.folder = metaFromUrl.folder;
     saveStoredBoards(boards);
@@ -736,9 +739,12 @@ document.getElementById('deletePage').onclick = () => {
   broadcast({type: 'full_sync', pages, page}); renderPages(); render();
 };
 
-/* DODAWANIE ZDJĘĆ */
+/* =====================================================================
+   OBŁSUGA ZRZUTÓW EKRANU (Ctrl+V, Przycisk Wklej, Drag & Drop, Plik)
+   ===================================================================== */
 function handleImageFile(file){
-  if(!file || !file.type.startsWith('image/')) return;
+  if(!file) return;
+  // Jeśli plik nie ma typu MIME (zdarza się przy niektórych zrzutach ekranu), sprawdzamy czy da się go wczytać jako obraz
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -755,21 +761,88 @@ function handleImageFile(file){
       const src = off.toDataURL('image/jpeg', 0.85);
       const {w, h} = dimensions();
       const fit = Math.min((w * 0.75) / tw, (h * 0.75) / th, 1);
-      const item = {id: uid(), kind: 'image', src, nx: 0.04, ny: 0.04, nw: (tw * fit) / w, nh: (th * fit) / h};
+      const item = {id: uid(), kind: 'image', src, nx: 0.05, ny: 0.05, nw: (tw * fit) / w, nh: (th * fit) / h};
       pages[page].items.push(item);
+      redoStack = [];
       broadcast({type: 'item_commit', pageIndex: page, item});
       renderPages(); render();
+      showToast('✓ Dodano zrzut ekranu / obraz na tablicę');
     };
+    img.onerror = () => showToast('⚠ Ten plik nie jest obsługiwanym obrazem.');
     img.src = reader.result;
   };
   reader.readAsDataURL(file);
 }
+
+// 1. Wybór pliku z dysku
 document.getElementById('imageBtn').onclick = () => document.getElementById('imageInput').click();
 document.getElementById('imageInput').onchange = e => { handleImageFile(e.target.files[0]); e.target.value = ''; };
-window.addEventListener('paste', e => {
+
+// 2. Wklejanie ze schowka przez Ctrl+V (obsługuje zarówno clipboardData.items jak i clipboardData.files)
+document.addEventListener('paste', e => {
   if(!document.getElementById('boardView').classList.contains('active')) return;
-  for(const it of (e.clipboardData?.items || [])){
-    if(it.type.startsWith('image/')){ handleImageFile(it.getAsFile()); break; }
+  if(activeInlineEditor && document.activeElement === activeInlineEditor) return;
+
+  const cd = e.clipboardData || window.clipboardData;
+  if(!cd) return;
+
+  // Sprawdzamy najpierw files (częste przy kopiowaniu pliku obrazu z eksploratora plików)
+  if(cd.files && cd.files.length > 0){
+    for(const file of cd.files){
+      if(file.type.startsWith('image/')){
+        e.preventDefault();
+        handleImageFile(file);
+        return;
+      }
+    }
+  }
+
+  // Sprawdzamy items (częste przy Win+Shift+S / PrintScreen / Kopiuj obraz z przeglądarki)
+  if(cd.items && cd.items.length > 0){
+    for(const item of cd.items){
+      if(item.kind === 'file' && item.type.startsWith('image/')){
+        e.preventDefault();
+        const blob = item.getAsFile();
+        if(blob) handleImageFile(blob);
+        return;
+      }
+    }
+  }
+});
+
+// 3. Przycisk "📋 Wklej screen" na pasku narzędzi (używa nowoczesnego Clipboard API)
+document.getElementById('pasteBtn').onclick = async () => {
+  try {
+    if(!navigator.clipboard || !navigator.clipboard.read){
+      showToast('Użyj skrótu klawiszowego Ctrl + V bezpośrednio na tablicy.');
+      return;
+    }
+    const clipboardItems = await navigator.clipboard.read();
+    for(const item of clipboardItems){
+      const imgType = item.types.find(t => t.startsWith('image/'));
+      if(imgType){
+        const blob = await item.getType(imgType);
+        handleImageFile(blob);
+        return;
+      }
+    }
+    showToast('Brak obrazka w schowku. Zrób najpierw zrzut ekranu (Win+Shift+S).');
+  } catch(err) {
+    showToast('Kliknij na kartkę i wciśnij Ctrl + V, aby wkleić zrzut ekranu.');
+  }
+};
+
+// 4. Przeciąganie i upuszczanie (Drag & Drop) pliku prosto na tablicę
+paper.addEventListener('dragover', e => {
+  e.preventDefault();
+  paper.classList.add('drag-over');
+});
+paper.addEventListener('dragleave', () => paper.classList.remove('drag-over'));
+paper.addEventListener('drop', e => {
+  e.preventDefault();
+  paper.classList.remove('drag-over');
+  if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0){
+    handleImageFile(e.dataTransfer.files[0]);
   }
 });
 

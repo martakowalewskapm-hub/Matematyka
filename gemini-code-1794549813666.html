@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATEMATYKA+ | Korepetycje online LIVE</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{--bg:#0b0b0d;--panel:#151518;--panel2:#1d1d21;--gold:#d6b56d;--gold2:#f0d99e;--muted:#a6a4a0;--line:#343238;--white:#f7f5ef;--green:#3fb950;--red:#f85149}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--white);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.topbar{height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 5vw;background:#101012;position:sticky;top:0;z-index:20}
+.brand{font-size:23px;letter-spacing:2px;font-weight:800}.brand span{color:var(--gold)}
+.nav{display:flex;gap:8px;flex-wrap:wrap}.nav button,.ghost{background:transparent;color:var(--muted);border:1px solid transparent;padding:9px 12px;border-radius:9px}.nav button.active,.nav button:hover{color:var(--gold2);border-color:#6d5933;background:#211d15}
+.goldbtn{background:var(--gold);color:#17130b;border:0;border-radius:9px;padding:11px 16px;font-weight:750}.goldbtn:hover{background:var(--gold2)}
+main{max-width:1240px;margin:auto;padding:32px 22px 70px}.view{display:none}.view.active{display:block}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:35px;align-items:center;padding:52px 0 42px}.eyebrow{color:var(--gold);text-transform:uppercase;letter-spacing:2px;font-size:12px;font-weight:700}
+h1{font-size:clamp(36px,5vw,62px);line-height:1.06;margin:15px 0 20px;letter-spacing:-1.5px}.lead{font-size:18px;color:#c3c0b9;max-width:650px}.hero-card{border:1px solid #55472d;border-radius:18px;padding:28px;background:radial-gradient(circle at 80% 10%,#3b3020,#171619 55%);min-height:280px;display:flex;flex-direction:column;justify-content:space-between}
+.math-art{font-family:Georgia,serif;color:var(--gold2);font-size:clamp(25px,4vw,42px);line-height:1.7;text-align:center;letter-spacing:2px}
+.stats,.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:25px 0}.card,.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}.stat strong{display:block;color:var(--gold2);font-size:25px}.muted{color:var(--muted)}h2{font-size:29px;margin:8px 0 18px}h3{margin:5px 0 8px}.section-head{display:flex;justify-content:space-between;align-items:end;gap:15px;margin:38px 0 12px}
+.feature-icon{color:var(--gold);font-size:24px}.pill{display:inline-block;border:1px solid #6b5935;color:var(--gold2);padding:4px 9px;border-radius:30px;font-size:12px}
+label{display:block;color:#d9d5cb;font-size:13px;margin:12px 0 5px}input,select,textarea{width:100%;background:#101013;border:1px solid var(--line);border-radius:9px;padding:11px;color:var(--white);outline:none}input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-actions{margin-top:16px}
+.notice{background:#211d15;border:1px solid #5c4b2d;color:#e7d7b2;padding:12px 14px;border-radius:10px;margin:12px 0}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:12px}.day{padding:12px 4px;text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:#d8d5ce}.day small{display:block;color:var(--muted)}.day.available{border-color:#79643a;cursor:pointer}.day.selected{background:var(--gold);color:#17130b}.day.selected small{color:#4a3a1b}
+
+/* LIVE BOARD & SESSION BAR */
+.live-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:#16161a;border:1px solid #4c3f26;border-radius:12px;padding:12px 16px;margin-bottom:14px}
+.live-status{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 3px #ffffff12}
+.dot.online{background:var(--green);box-shadow:0 0 10px var(--green)}
+.dot.waiting{background:var(--gold);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.live-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.live-controls input{width:auto;padding:7px 10px;font-size:13px}
+.room-badge{background:#252017;border:1px dashed var(--gold);color:var(--gold2);padding:6px 12px;border-radius:8px;font-family:monospace;font-size:15px;font-weight:700;letter-spacing:1px}
+
+.board-shell{background:#101013;border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.board-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--line);background:#19191d}
+.tool{background:#25252a;border:1px solid #3c3b40;color:#eee;padding:7px 11px;border-radius:8px;font-size:13px;transition:.15s}
+.tool:hover:not(:disabled){border-color:#68666e;background:#2e2e34}
+.tool.active{border-color:var(--gold);color:var(--gold2);background:#302719}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+.board-work{display:grid;grid-template-columns:1fr 195px;min-height:560px}
+.canvas-wrap{padding:15px;min-width:0;display:flex;align-items:stretch;background:#121215}
+.paper{background:#fff;color:#111;border-radius:6px;overflow:hidden;width:100%;min-height:530px;position:relative;box-shadow:0 6px 26px #0009}
+.paper canvas{width:100%;height:100%;min-height:530px;display:block;touch-action:none;cursor:crosshair}
+
+/* LIVE REMOTE CURSORS */
+.remote-cursor{position:absolute;pointer-events:none;z-index:10;transform:translate(-2px,-2px);transition:left .04s linear,top .04s linear;display:none}
+.remote-cursor svg{width:18px;height:18px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.remote-label{background:#d6b56d;color:#14110a;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;margin-left:10px;margin-top:-4px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+
+.pages{border-left:1px solid var(--line);padding:12px;background:#17171a;display:flex;flex-direction:column;justify-content:space-between}
+.pages h3{font-size:13px;color:var(--muted);letter-spacing:.5px}
+.page-list{display:flex;flex-direction:column;gap:7px;max-height:310px;overflow-y:auto;padding-right:2px}
+.page-thumb{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#222;color:#ddd;text-align:left;font-size:13px}
+.page-thumb.active{border-color:var(--gold);color:var(--gold2);background:#282319}
+.page-thumb small{display:block;color:var(--muted);font-size:11px}
+.board-footer{padding:9px 15px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;background:#141417}
+
+.teacher-grid{display:grid;grid-template-columns:220px 1fr;gap:18px}.side{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px}.side button{display:block;width:100%;text-align:left;margin:4px 0}.table{width:100%;border-collapse:collapse}.table td,.table th{padding:12px;border-bottom:1px solid var(--line);text-align:left}.table th{color:var(--muted);font-size:12px}
+footer{border-top:1px solid var(--line);padding:25px 5vw;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+@media(max-width:820px){.topbar{height:auto;padding:14px 18px;align-items:flex-start;gap:12px;flex-direction:column}.nav{width:100%}.nav button{font-size:12px;padding:7px}.hero{grid-template-columns:1fr;padding-top:30px}.stats,.cards{grid-template-columns:1fr}.board-work{grid-template-columns:1fr}.pages{border-left:0;border-top:1px solid var(--line)}.page-list{flex-direction:row;flex-wrap:wrap;max-height:none}.page-thumb{flex:1;min-width:85px}.teacher-grid{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">MATEMATYKA<span>+</span></div>
+  <nav class="nav" aria-label="Główna nawigacja">
+    <button class="active" data-view="home">Start</button>
+    <button data-view="offer">Oferta</button>
+    <button data-view="booking">Rezerwacja</button>
+    <button data-view="board">Tablica LIVE</button>
+    <button data-view="student">Strefa ucznia</button>
+    <button data-view="teacher">Panel nauczyciela</button>
+  </nav>
+</header>
+<main>
+<section id="home" class="view active">
+  <div class="hero">
+    <div><div class="eyebrow">Indywidualne korepetycje online</div><h1>Matematyka.<br><span style="color:var(--gold)">Bez stresu.</span><br>Z planem na maturę.</h1>
+      <p class="lead">Przygotuj się do matury podstawowej lub rozszerzonej z pomocą indywidualnych lekcji, wspólnej tablicy na żywo i materiałów dopasowanych do Twoich potrzeb.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="goldbtn" onclick="showView('board')">Otwórz tablicę LIVE →</button>
+        <button class="ghost" style="border-color:#5c4b2d" onclick="showView('booking')">Umów pierwszą lekcję</button>
+      </div>
+    </div>
+    <div class="hero-card"><span class="pill">MATURA PODSTAWOWA • ROZSZERZONA</span><div class="math-art">f(x) = ax² + bx + c<br>∫ x² dx<br>sin² α + cos² α = 1</div><div class="muted">Zrozum teorię. Przećwicz zadania. Podejdź pewnie do egzaminu.</div></div>
+  </div>
+  <div class="stats"><div class="stat"><strong>1:1 LIVE</strong><span class="muted">wspólna tablica w czasie rzeczywistym</span></div><div class="stat"><strong>Online</strong><span class="muted">lekcje z dowolnego miejsca</span></div><div class="stat"><strong>Twoje tempo</strong><span class="muted">plan nauki dopasowany do Ciebie</span></div></div>
+  <div class="section-head"><div><div class="eyebrow">Dlaczego MATEMATYKA+</div><h2>Wszystko do nauki w jednym miejscu</h2></div></div>
+  <div class="cards">
+    <div class="card"><div class="feature-icon">▤</div><h3>Interaktywna tablica LIVE</h3><p class="muted">Piszemy razem na żywo, widzimy swoje kursory, rysujemy wykresy i rozwiązujemy zadania.</p><button class="ghost" onclick="showView('board')">Otwórz tablicę →</button></div>
+    <div class="card"><div class="feature-icon">◷</div><h3>Wygodne terminy</h3><p class="muted">Wyślij zgłoszenie i ustal dogodny termin lekcji online.</p><button class="ghost" onclick="showView('booking')">Przejdź do zapisów →</button></div>
+    <div class="card"><div class="feature-icon">▧</div><h3>Materiały dla ucznia</h3><p class="muted">Zadania, notatki i arkusze zebrane w Twojej strefie ucznia.</p><button class="ghost" onclick="showView('student')">Zobacz strefę →</button></div>
+  </div>
+</section>
+
+<section id="offer" class="view">
+  <div class="eyebrow">Oferta</div><h1 style="font-size:44px">Przygotowanie do matury<br><span style="color:var(--gold)">na Twoich zasadach.</span></h1>
+  <div class="cards">
+    <div class="card"><span class="pill">POZIOM PODSTAWOWY</span><h2>Solidne podstawy</h2><p class="muted">Powtórzenie najważniejszych działów, rozwiązywanie typowych zadań maturalnych i praca nad pewnością w obliczeniach.</p></div>
+    <div class="card"><span class="pill">POZIOM ROZSZERZONY</span><h2>Więcej wyzwań</h2><p class="muted">Zadania problemowe, dowody, funkcje, ciągi, geometria analityczna i strategie egzaminacyjne.</p></div>
+    <div class="card"><span class="pill">PLAN INDYWIDUALNY</span><h2>Nauka z celem</h2><p class="muted">Na początku określamy potrzeby, a następnie dobieramy tematy i tempo pracy.</p></div>
+  </div>
+  <div class="notice">Cennik: cena ustalana indywidualnie. Napisz przez formularz rezerwacji, aby omówić zakres i częstotliwość zajęć.</div>
+  <button class="goldbtn" onclick="showView('booking')">Zapytaj o lekcje</button>
+</section>
+
+<section id="booking" class="view">
+  <div class="eyebrow">Zapisy</div><h1 style="font-size:44px">Zarezerwuj lekcję</h1><p class="lead">Wypełnij zgłoszenie. W tym prototypie rezerwacja jest demonstracyjna — nie wysyła danych na serwer.</p>
+  <div class="card" style="max-width:760px">
+    <form id="bookingForm">
+      <div class="formgrid"><div><label>Imię i nazwisko</label><input required placeholder="Jan Kowalski"></div><div><label>Adres e-mail</label><input required type="email" placeholder="jan@email.com"></div></div>
+      <div class="formgrid"><div><label>Poziom matury</label><select><option>Podstawowy</option><option>Rozszerzony</option><option>Jeszcze nie wiem</option></select></div><div><label>Preferowana forma</label><select><option>Lekcja indywidualna online</option><option>Konsultacja / pojedyncze zadania</option></select></div></div>
+      <label>Wybierz preferowany dzień (podgląd kalendarza)</label><div class="calendar" id="calendar"></div>
+      <label>Wiadomość (opcjonalnie)</label><textarea rows="3" placeholder="Napisz, z czym potrzebujesz pomocy..."></textarea>
+      <div class="form-actions"><button class="goldbtn" type="submit">Wyślij zgłoszenie</button></div>
+      <div id="bookingMsg" class="notice" style="display:none"></div>
+    </form>
+  </div>
+</section>
+
+<section id="board" class="view">
+  <div class="eyebrow">Wspólna przestrzeń w czasie rzeczywistym</div>
+  <h1 style="font-size:40px;margin-bottom:8px">Tablica online <span style="color:var(--gold)">LIVE</span></h1>
+  <p class="lead" style="margin-bottom:16px">Utwórz pokój lekcji i wyślij link uczniowi — będziecie pisać na jednej tablicy na żywo jak na eTuti.</p>
+
+  <!-- PASEK POŁĄCZENIA LIVE -->
+  <div class="live-bar">
+    <div class="live-status">
+      <span class="dot" id="liveDot"></span>
+      <span id="liveText">Tryb lokalny (połącz się, aby udostępnić tablicę na żywo)</span>
+    </div>
+    <div class="live-controls">
+      <input id="userNameInput" placeholder="Twoje imię" value="Nauczyciel" style="width:125px" title="Nazwa widoczna przy Twoim kursorze">
+      <button class="goldbtn" id="createRoomBtn" style="padding:7px 13px;font-size:13px">● Utwórz pokój LIVE</button>
+      <span id="roomCodeWrap" style="display:none;align-items:center;gap:6px">
+        <span class="room-badge" id="roomCodeDisplay">---</span>
+        <button class="tool" id="copyLinkBtn" title="Skopiuj link zaproszenia dla ucznia">🔗 Kopiuj link</button>
+      </span>
+      <span style="color:var(--line)">|</span>
+      <input id="joinCodeInput" placeholder="Kod pokoju (np. MAT-1234)" style="width:165px;text-transform:uppercase">
+      <button class="tool" id="joinRoomBtn">Dołącz</button>
+    </div>
+  </div>
+
+  <div class="board-shell">
+    <div class="board-toolbar">
+      <button class="tool active" id="penBtn" title="Pisak">✎ Pisak</button>
+      <button class="tool" id="laserBtn" title="Wskaźnik laserowy (nie zostawia śladu)">◎ Laser</button>
+      <button class="tool" id="eraserBtn" title="Gumka">⌫ Gumka</button>
+      <button class="tool" id="lineBtn" title="Linia prosta">╱ Linia</button>
+      <button class="tool" id="rectBtn" title="Prostokąt">▢ Prostokąt</button>
+      <button class="tool" id="ellipseBtn" title="Okrąg / elipsa">◯ Okrąg</button>
+      <button class="tool" id="textBtn" title="Wstaw tekst">T Tekst</button>
+      <label style="margin:0 0 0 5px">Kolor <input id="ink" type="color" value="#171717" style="width:34px;height:32px;padding:2px;vertical-align:middle"></label>
+      <label style="margin:0">Grubość <input id="width" type="range" min="1" max="16" value="3" style="width:75px;vertical-align:middle"></label>
+      <label style="margin:0">Kartka <select id="paperType" style="width:auto;padding:6px 8px"><option value="plain">Czysta</option><option value="grid" selected>W kratkę</option><option value="lined">W linie</option></select></label>
+      <button class="tool" id="undoBtn" title="Cofnij (Ctrl+Z)">↶ Cofnij</button>
+      <button class="tool" id="redoBtn" title="Ponów (Ctrl+Y)">↷ Ponów</button>
+      <button class="tool" id="clearBtn" title="Wyczyść kartkę">Wyczyść</button>
+    </div>
+    <div class="board-toolbar" style="border-top:1px solid var(--line);background:#151519">
+      <button class="tool" id="imageBtn">＋ Dodaj zdjęcie</button><input id="imageInput" type="file" accept="image/*" hidden>
+      <button class="tool" id="downloadBtn">↓ Zapisz PNG</button>
+      <button class="tool" id="printBtn">⎙ Drukuj / PDF</button>
+      <span class="muted" style="font-size:12px;margin-left:auto">Wskazówka: możesz też wkleić zrzut ekranu z zadaniem przez <b>Ctrl+V</b></span>
+    </div>
+    <div class="board-work">
+      <div class="canvas-wrap">
+        <div class="paper" id="paperBox">
+          <canvas id="whiteboard"></canvas>
+          <!-- KURSOR DRUGIEJ OSOBY -->
+          <div class="remote-cursor" id="remoteCursor">
+            <svg viewBox="0 0 24 24" fill="#d6b56d" stroke="#111" stroke-width="1.5"><path d="M4 2l16 10-7 2-3 7z"/></svg>
+            <div class="remote-label" id="remoteCursorLabel">Uczeń</div>
+          </div>
+        </div>
+      </div>
+      <aside class="pages">
+        <div>
+          <h3>KARTKI ZESZYTU</h3>
+          <div class="page-list" id="pageList"></div>
+          <button class="goldbtn" id="addPage" style="width:100%;margin-top:12px;padding:9px">＋ Nowa kartka</button>
+          <button class="tool" id="duplicatePage" style="width:100%;margin-top:7px">Kopiuj kartkę</button>
+          <button class="tool" id="deletePage" style="width:100%;margin-top:7px">Usuń kartkę</button>
+        </div>
+        <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:12px">
+          <h3>SESJA LIVE</h3>
+          <div id="participantsInfo" class="muted" style="font-size:12px">Brak połączonych uczestników. Kliknij „Utwórz pokój LIVE”, aby rozpocząć lekcję.</div>
+        </div>
+      </aside>
+    </div>
+    <div class="board-footer">
+      <span id="pageStatus">Strona 1 z 1</span>
+      <span id="syncStatus">Synchronizacja: gotowa</span>
+      <span id="toolStatus">Narzędzie: pisak</span>
+    </div>
+  </div>
+</section>
+
+<section id="student" class="view">
+  <div class="eyebrow">Twoje konto</div><h1 style="font-size:44px">Strefa ucznia</h1><p class="lead">Miejsce na materiały, zadania i postępy w przygotowaniach.</p>
+  <div class="cards">
+    <div class="card"><div class="feature-icon">▤</div><h3>Notatki z lekcji</h3><p class="muted">Miejsce na podsumowania tematów i najważniejsze wzory.</p><span class="pill">Przykładowa sekcja</span></div>
+    <div class="card"><div class="feature-icon">▣</div><h3>Arkusze maturalne</h3><p class="muted">Zestawy zadań do samodzielnego rozwiązania.</p><span class="pill">Przykładowa sekcja</span></div>
+    <div class="card"><div class="feature-icon">✓</div><h3>Zadania domowe</h3><p class="muted">Lista ćwiczeń do wykonania między spotkaniami.</p><span class="pill">Przykładowa sekcja</span></div>
+  </div>
+  <div class="card"><h3>Postęp w nauce</h3><p class="muted">Po uruchomieniu kont uczniowskich będzie tu widoczny indywidualny plan nauki i postępy.</p><div style="height:9px;background:#343238;border-radius:20px;overflow:hidden"><div style="height:100%;width:60%;background:var(--gold)"></div></div><small class="muted">Przykładowy pasek postępu — bez zapisanych danych.</small></div>
+</section>
+
+<section id="teacher" class="view">
+  <div class="eyebrow">Administracja</div><h1 style="font-size:44px">Panel nauczyciela</h1><p class="lead">Podgląd narzędzi do zarządzania korepetycjami. Dostęp jest demonstracyjny i nie wymaga logowania.</p>
+  <div class="teacher-grid"><aside class="side"><span class="pill">MENU NAUCZYCIELA</span><button class="tool active">▦ Przegląd</button><button class="tool">◷ Rezerwacje</button><button class="tool">♙ Uczniowie</button><button class="tool" onclick="showView('board')">✎ Tablica LIVE</button><button class="tool">▤ Materiały</button></aside>
+  <div><div class="stats" style="margin-top:0"><div class="stat"><strong>—</strong><span class="muted">Nowe zgłoszenia</span></div><div class="stat"><strong>—</strong><span class="muted">Lekcje w tym tygodniu</span></div><div class="stat"><strong>—</strong><span class="muted">Aktywni uczniowie</span></div></div>
+  <div class="card"><h3>Ostatnie rezerwacje</h3><table class="table"><thead><tr><th>Uczeń</th><th>Poziom</th><th>Status</th></tr></thead><tbody><tr><td colspan="3" class="muted">Brak rezerwacji — po podłączeniu formularza pojawią się tutaj.</td></tr></tbody></table></div></div></div>
+</section>
+</main>
+<footer><span>© 2026 MATEMATYKA+ • Korepetycje online</span><span>Tablica z synchronizacją P2P LIVE</span></footer>
+
+<script>
+/* --- NAWIGACJA --- */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+  if(id==='board') setTimeout(resizeCanvas, 30);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+
+/* --- KALENDARZ --- */
+const cal=document.getElementById('calendar');let chosen=null;
+['Pn','Wt','Śr','Cz','Pt','Sb','Nd'].forEach(x=>{let e=document.createElement('div');e.className='day';e.textContent=x;cal.appendChild(e)});
+for(let i=1;i<=28;i++){let e=document.createElement('button');e.type='button';e.className='day'+([2,4,7,9,11,14,16,18,21,23,25,28].includes(i)?' available':'');e.innerHTML=i+`<small>${[2,4,7,9,11,14,16,18,21,23,25,28].includes(i)?'wybierz':'—'}</small>`;if(e.classList.contains('available'))e.onclick=()=>{document.querySelectorAll('.day').forEach(d=>d.classList.remove('selected'));e.classList.add('selected');chosen=i};cal.appendChild(e)}
+document.getElementById('bookingForm').addEventListener('submit',e=>{e.preventDefault();let m=document.getElementById('bookingMsg');m.style.display='block';m.textContent='Dziękujemy! To demonstracyjne zgłoszenie. Wybrany dzień: '+(chosen||'do ustalenia')+'.';});
+
+/* =====================================================================
+   TABLICA INTERAKTYWNA LIVE (WebRTC PeerJS + znormalizowane współrzędne)
+   ===================================================================== */
+const canvas = document.getElementById('whiteboard');
+const ctx = canvas.getContext('2d');
+const paper = document.getElementById('paperBox');
+const imageCache = new Map(); // przechowuje obiekty Image po src, by łatwo je serializować przez sieć
+
+let pages = [{id: uid(), type: 'grid', items: []}];
+let page = 0;
+let tool = 'pen';
+let drawing = false;
+let current = null;
+let remoteActiveItem = null; // element rysowany w tej chwili przez drugą osobę
+let laserPoints = []; // ślad wskaźnika laserowego
+let redoStack = [];
+
+function uid(){ return Math.random().toString(36).slice(2, 10); }
+const dpr = () => window.devicePixelRatio || 1;
+function dimensions(){ return {w: Math.max(300, paper.clientWidth), h: Math.max(530, paper.clientHeight)}; }
+
+function resizeCanvas(){
+  const {w, h} = dimensions();
+  canvas.width = w * dpr();
+  canvas.height = h * dpr();
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  ctx.setTransform(dpr(), 0, 0, dpr(), 0, 0);
+  render();
+}
+
+function drawPaper(type){
+  const {w, h} = dimensions();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.save();
+  ctx.strokeStyle = '#e5e8ed';
+  ctx.lineWidth = 1;
+  if(type === 'grid'){
+    for(let x = 24; x < w; x += 24){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+    for(let y = 24; y < h; y += 24){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  } else if(type === 'lined'){
+    for(let y = 32; y < h; y += 30){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  }
+  ctx.restore();
+}
+
+function render(){
+  const {w, h} = dimensions();
+  ctx.clearRect(0, 0, w, h);
+  if(!pages[page]) page = 0;
+  drawPaper(pages[page].type);
+  pages[page].items.forEach(drawItem);
+  if(current) drawItem(current);
+  if(remoteActiveItem) drawItem(remoteActiveItem);
+  drawLaser();
+  updateHistoryButtons();
+}
+
+/* Współrzędne są przechowywane w formacie znormalizowanym (0..1),
+   dzięki czemu rysunki idealnie pasują u nauczyciela i ucznia niezależnie od rozmiaru ekranu! */
+function drawItem(item){
+  const {w, h} = dimensions();
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if(item.kind === 'stroke'){
+    ctx.strokeStyle = item.color;
+    ctx.lineWidth = item.width;
+    ctx.beginPath();
+    item.points.forEach((p, i) => {
+      const px = p.nx * w, py = p.ny * h;
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    });
+    if(item.points.length === 1){
+      ctx.lineTo(item.points[0].nx * w + 0.1, item.points[0].ny * h + 0.1);
+    }
+    ctx.stroke();
+  } else if(item.kind === 'shape'){
+    ctx.strokeStyle = item.color;
+    ctx.lineWidth = item.width;
+    const x1 = item.nx1 * w, y1 = item.ny1 * h, x2 = item.nx2 * w, y2 = item.ny2 * h;
+    const x = Math.min(x1, x2), y = Math.min(y1, y2), sw = Math.abs(x2 - x1), sh = Math.abs(y2 - y1);
+    ctx.beginPath();
+    if(item.shape === 'line'){ ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); }
+    if(item.shape === 'rect'){ ctx.rect(x, y, sw, sh); }
+    if(item.shape === 'ellipse'){ ctx.ellipse((x1+x2)/2, (y1+y2)/2, Math.max(1, sw/2), Math.max(1, sh/2), 0, 0, Math.PI*2); }
+    ctx.stroke();
+  } else if(item.kind === 'text'){
+    ctx.fillStyle = item.color;
+    ctx.font = `600 ${item.size || 20}px Inter, Arial, sans-serif`;
+    ctx.fillText(item.text, item.nx * w, item.ny * h);
+  } else if(item.kind === 'image' && item.src){
+    let img = imageCache.get(item.src);
+    if(!img){
+      img = new Image();
+      img.onload = () => render();
+      img.src = item.src;
+      imageCache.set(item.src, img);
+    }
+    if(img.complete && img.naturalWidth > 0){
+      ctx.drawImage(img, item.nx * w, item.ny * h, item.nw * w, item.nh * h);
+    }
+  }
+  ctx.restore();
+}
+
+function drawLaser(){
+  if(!laserPoints.length) return;
+  const now = Date.now();
+  laserPoints = laserPoints.filter(p => now - p.t < 750);
+  if(!laserPoints.length) return;
+  const {w, h} = dimensions();
+  ctx.save();
+  for(let i = 1; i < laserPoints.length; i++){
+    const p0 = laserPoints[i-1], p1 = laserPoints[i];
+    const alpha = Math.max(0, 1 - (now - p1.t) / 750);
+    ctx.strokeStyle = `rgba(235, 50, 50, ${alpha})`;
+    ctx.lineWidth = 5 * alpha + 1;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(p0.nx * w, p0.ny * h);
+    ctx.lineTo(p1.nx * w, p1.ny * h);
+    ctx.stroke();
+  }
+  const last = laserPoints[laserPoints.length - 1];
+  ctx.fillStyle = '#ff2a2a';
+  ctx.beginPath();
+  ctx.arc(last.nx * w, last.ny * h, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  requestAnimationFrame(render);
+}
+
+function normPoint(e){
+  const r = canvas.getBoundingClientRect();
+  return {
+    nx: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)),
+    ny: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))
+  };
+}
+
+function setTool(t){
+  tool = t;
+  ['pen','laser','eraser','line','rect','ellipse','text'].forEach(k => {
+    const el = document.getElementById(k + 'Btn');
+    if(el) el.classList.toggle('active', t === k);
+  });
+  const names = {pen:'pisak', laser:'wskaźnik laserowy', eraser:'gumka', line:'linia', rect:'prostokąt', ellipse:'okrąg', text:'tekst'};
+  document.getElementById('toolStatus').textContent = 'Narzędzie: ' + names[t];
+  canvas.style.cursor = t === 'text' ? 'text' : t === 'eraser' ? 'cell' : t === 'laser' ? 'pointer' : 'crosshair';
+}
+
+const getColor = () => document.getElementById('ink').value;
+const getWidth = () => +document.getElementById('width').value;
+
+/* --- RYSOWANIE I WYSYŁANIE NA ŻYWO --- */
+let lastCursorSent = 0;
+
+canvas.addEventListener('pointerdown', e => {
+  const p = normPoint(e);
+  if(tool === 'laser'){
+    drawing = true;
+    canvas.setPointerCapture(e.pointerId);
+    laserPoints.push({...p, t: Date.now()});
+    broadcast({type: 'laser', nx: p.nx, ny: p.ny});
+    render();
+    return;
+  }
+  if(tool === 'text'){
+    const value = prompt('Wpisz tekst lub wzór matematyczny:');
+    if(value){
+      const item = {id: uid(), kind: 'text', text: value, nx: p.nx, ny: p.ny, color: getColor(), size: 20};
+      pages[page].items.push(item);
+      redoStack = [];
+      broadcast({type: 'item_commit', pageIndex: page, item});
+      render();
+    }
+    return;
+  }
+  drawing = true;
+  canvas.setPointerCapture(e.pointerId);
+  if(tool === 'pen' || tool === 'eraser'){
+    current = {
+      id: uid(),
+      kind: 'stroke',
+      color: tool === 'eraser' ? '#ffffff' : getColor(),
+      width: tool === 'eraser' ? getWidth() * 5 : getWidth(),
+      points: [p]
+    };
+  } else {
+    current = {
+      id: uid(),
+      kind: 'shape',
+      shape: tool,
+      color: getColor(),
+      width: getWidth(),
+      nx1: p.nx, ny1: p.ny, nx2: p.nx, ny2: p.ny
+    };
+  }
+  broadcast({type: 'item_progress', pageIndex: page, item: current});
+  render();
+});
+
+canvas.addEventListener('pointermove', e => {
+  const p = normPoint(e);
+  const now = Date.now();
+  // Wysyłanie pozycji kursora max 30 razy na sekundę
+  if(now - lastCursorSent > 33){
+    lastCursorSent = now;
+    broadcast({type: 'cursor', nx: p.nx, ny: p.ny, name: getUserName()});
+  }
+
+  if(!drawing) return;
+
+  if(tool === 'laser'){
+    laserPoints.push({...p, t: now});
+    broadcast({type: 'laser', nx: p.nx, ny: p.ny});
+    render();
+    return;
+  }
+  if(!current) return;
+
+  if(current.kind === 'stroke'){
+    current.points.push(p);
+  } else {
+    current.nx2 = p.nx;
+    current.ny2 = p.ny;
+  }
+  // Wysyłamy postęp na żywo podczas rysowania!
+  broadcast({type: 'item_progress', pageIndex: page, item: current});
+  render();
+});
+
+function finishDraw(){
+  if(!drawing) return;
+  drawing = false;
+  if(current){
+    pages[page].items.push(current);
+    redoStack = [];
+    broadcast({type: 'item_commit', pageIndex: page, item: current});
+    current = null;
+  }
+  render();
+}
+canvas.addEventListener('pointerup', finishDraw);
+canvas.addEventListener('pointercancel', finishDraw);
+
+function updateHistoryButtons(){
+  document.getElementById('undoBtn').disabled = !pages[page].items.length;
+  document.getElementById('redoBtn').disabled = !redoStack.length;
+}
+
+function renderPages(){
+  const list = document.getElementById('pageList');
+  list.innerHTML = '';
+  pages.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.className = 'page-thumb' + (i === page ? ' active' : '');
+    b.innerHTML = '▤ Kartka ' + (i+1) + '<small>' + ({plain:'czysta',grid:'kratka',lined:'linie'}[p.type]) + ' • ' + p.items.length + ' el.</small>';
+    b.onclick = () => {
+      page = i;
+      document.getElementById('paperType').value = p.type;
+      broadcast({type: 'page_switch', pageIndex: page});
+      renderPages();
+      render();
+    };
+    list.appendChild(b);
+  });
+  document.getElementById('pageStatus').textContent = `Strona ${page + 1} z ${pages.length}`;
+}
+
+/* --- PRZYCISKI NARZĘDZI --- */
+document.getElementById('penBtn').onclick = () => setTool('pen');
+document.getElementById('laserBtn').onclick = () => setTool('laser');
+document.getElementById('eraserBtn').onclick = () => setTool('eraser');
+document.getElementById('lineBtn').onclick = () => setTool('line');
+document.getElementById('rectBtn').onclick = () => setTool('rect');
+document.getElementById('ellipseBtn').onclick = () => setTool('ellipse');
+document.getElementById('textBtn').onclick = () => setTool('text');
+
+document.getElementById('paperType').onchange = e => {
+  pages[page].type = e.target.value;
+  broadcast({type: 'paper_type', pageIndex: page, paperType: e.target.value});
+  renderPages();
+  render();
+};
+
+function undoAction(){
+  const item = pages[page].items.pop();
+  if(item){
+    redoStack.push(item);
+    broadcast({type: 'full_sync', pages, page});
+    renderPages();
+    render();
+  }
+}
+function redoAction(){
+  const item = redoStack.pop();
+  if(item){
+    pages[page].items.push(item);
+    broadcast({type: 'full_sync', pages, page});
+    renderPages();
+    render();
+  }
+}
+document.getElementById('undoBtn').onclick = undoAction;
+document.getElementById('redoBtn').onclick = redoAction;
+
+document.addEventListener('keydown', e => {
+  if(!document.getElementById('board').classList.contains('active')) return;
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); undoAction(); }
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redoAction(); }
+});
+
+document.getElementById('clearBtn').onclick = () => {
+  if(confirm('Wyczyścić bieżącą kartkę dla wszystkich?')){
+    pages[page].items = [];
+    redoStack = [];
+    broadcast({type: 'full_sync', pages, page});
+    renderPages();
+    render();
+  }
+};
+
+document.getElementById('addPage').onclick = () => {
+  pages.push({id: uid(), type: document.getElementById('paperType').value, items: []});
+  page = pages.length - 1;
+  redoStack = [];
+  broadcast({type: 'full_sync', pages, page});
+  renderPages();
+  render();
+};
+
+document.getElementById('duplicatePage').onclick = () => {
+  const copy = JSON.parse(JSON.stringify(pages[page]));
+  copy.id = uid();
+  pages.splice(page + 1, 0, copy);
+  page++;
+  broadcast({type: 'full_sync', pages, page});
+  renderPages();
+  render();
+};
+
+document.getElementById('deletePage').onclick = () => {
+  if(pages.length === 1){ alert('Zeszyt musi mieć przynajmniej jedną kartkę.'); return; }
+  if(confirm('Usunąć tę kartkę?')){
+    pages.splice(page, 1);
+    page = Math.max(0, page - 1);
+    document.getElementById('paperType').value = pages[page].type;
+    broadcast({type: 'full_sync', pages, page});
+    renderPages();
+    render();
+  }
+};
+
+document.getElementById('downloadBtn').onclick = () => {
+  const a = document.createElement('a');
+  a.download = 'matematyka-plus-kartka-' + (page + 1) + '.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+};
+
+document.getElementById('printBtn').onclick = () => {
+  const data = canvas.toDataURL('image/png');
+  const win = window.open('', '_blank');
+  if(!win){ alert('Zezwól przeglądarce na otwarcie okna drukowania.'); return; }
+  win.document.write('<html><head><title>MATEMATYKA+ — kartka</title><style>body{margin:0}img{width:100%;height:auto}</style></head><body><img src="' + data + '" onload="window.print()"></body></html>');
+  win.document.close();
+};
+
+/* --- DODAWANIE I KOMPRESJA ZDJĘĆ (plik + Ctrl+V) --- */
+function handleImageFile(file){
+  if(!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      // Skalujemy obraz do max 1100px, żeby błyskawicznie przesłał się przez WebRTC
+      const maxDim = 1100;
+      let tw = img.width, th = img.height;
+      if(tw > maxDim || th > maxDim){
+        const r = Math.min(maxDim / tw, maxDim / th);
+        tw = Math.round(tw * r);
+        th = Math.round(th * r);
+      }
+      const off = document.createElement('canvas');
+      off.width = tw; off.height = th;
+      off.getContext('2d').drawImage(img, 0, 0, tw, th);
+      const compressedSrc = off.toDataURL('image/jpeg', 0.85);
+
+      const {w, h} = dimensions();
+      const fitRatio = Math.min((w * 0.75) / tw, (h * 0.75) / th, 1);
+      const item = {
+        id: uid(),
+        kind: 'image',
+        src: compressedSrc,
+        nx: 0.04,
+        ny: 0.04,
+        nw: (tw * fitRatio) / w,
+        nh: (th * fitRatio) / h
+      };
+      pages[page].items.push(item);
+      broadcast({type: 'item_commit', pageIndex: page, item});
+      renderPages();
+      render();
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('imageBtn').onclick = () => document.getElementById('imageInput').click();
+document.getElementById('imageInput').onchange = e => { handleImageFile(e.target.files[0]); e.target.value = ''; };
+window.addEventListener('paste', e => {
+  if(!document.getElementById('board').classList.contains('active')) return;
+  const items = e.clipboardData?.items || [];
+  for(const it of items){
+    if(it.type.startsWith('image/')){ handleImageFile(it.getAsFile()); break; }
+  }
+});
+
+/* =====================================================================
+   SILNIK POŁĄCZEŃ LIVE (PeerJS WebRTC + BroadcastChannel)
+   ===================================================================== */
+let peer = null;
+let connections = [];
+let isHost = false;
+let currentRoomCode = null;
+const remoteCursorEl = document.getElementById('remoteCursor');
+const remoteCursorLabel = document.getElementById('remoteCursorLabel');
+let cursorHideTimer = null;
+
+const getUserName = () => (document.getElementById('userNameInput').value.trim() || 'Uczestnik');
+
+function setLiveUI(state, text, roomCode = ''){
+  const dot = document.getElementById('liveDot');
+  const txt = document.getElementById('liveText');
+  const wrap = document.getElementById('roomCodeWrap');
+  dot.className = 'dot ' + (state === 'online' ? 'online' : state === 'waiting' ? 'waiting' : '');
+  txt.textContent = text;
+  if(roomCode){
+    wrap.style.display = 'inline-flex';
+    document.getElementById('roomCodeDisplay').textContent = roomCode;
+  }
+}
+
+function updateParticipantsUI(){
+  const active = connections.filter(c => c.open);
+  const el = document.getElementById('participantsInfo');
+  if(!active.length){
+    el.textContent = currentRoomCode
+      ? 'Oczekiwanie na dołączenie drugiej osoby do pokoju ' + currentRoomCode + '...'
+      : 'Brak połączonych uczestników.';
+    if(currentRoomCode) setLiveUI('waiting', 'Pokój aktywny — oczekiwanie na ucznia...', currentRoomCode);
+  } else {
+    el.innerHTML = `<span style="color:var(--green)">● Połączono na żywo</span> (${active.length} os. w pokoju). Zmiany synchronizują się natychmiast.`;
+    setLiveUI('online', 'LIVE — Tablica zsynchronizowana na żywo', currentRoomCode);
+  }
+}
+
+function broadcast(msg){
+  connections.forEach(conn => {
+    if(conn && conn.open){
+      try { conn.send(msg); } catch(err){}
+    }
+  });
+}
+
+function setupConnection(conn){
+  connections.push(conn);
+  conn.on('open', () => {
+    updateParticipantsUI();
+    // Jeśli jesteśmy gospodarzem pokoju, wysyłamy aktualny stan całej tablicy nowemu uczniowi
+    if(isHost){
+      conn.send({type: 'full_sync', pages, page});
+    }
+  });
+
+  conn.on('data', data => handleRemoteMessage(data));
+
+  conn.on('close', () => {
+    connections = connections.filter(c => c !== conn);
+    remoteCursorEl.style.display = 'none';
+    updateParticipantsUI();
+  });
+}
+
+function handleRemoteMessage(msg){
+  if(!msg || !msg.type) return;
+
+  if(msg.type === 'cursor'){
+    const {w, h} = dimensions();
+    remoteCursorEl.style.display = 'block';
+    remoteCursorEl.style.left = (msg.nx * w) + 'px';
+    remoteCursorEl.style.top = (msg.ny * h) + 'px';
+    remoteCursorLabel.textContent = msg.name || 'Uczestnik';
+    clearTimeout(cursorHideTimer);
+    cursorHideTimer = setTimeout(() => { remoteCursorEl.style.display = 'none'; }, 3500);
+  }
+  else if(msg.type === 'laser'){
+    laserPoints.push({nx: msg.nx, ny: msg.ny, t: Date.now()});
+    render();
+  }
+  else if(msg.type === 'item_progress'){
+    if(msg.pageIndex === page){
+      remoteActiveItem = msg.item;
+      render();
+    }
+  }
+  else if(msg.type === 'item_commit'){
+    remoteActiveItem = null;
+    if(pages[msg.pageIndex]){
+      // Unikamy duplikatów po ID
+      if(!pages[msg.pageIndex].items.some(x => x.id === msg.item.id)){
+        pages[msg.pageIndex].items.push(msg.item);
+      }
+    }
+    renderPages();
+    render();
+  }
+  else if(msg.type === 'page_switch'){
+    if(pages[msg.pageIndex]){
+      page = msg.pageIndex;
+      document.getElementById('paperType').value = pages[page].type;
+      renderPages();
+      render();
+    }
+  }
+  else if(msg.type === 'paper_type'){
+    if(pages[msg.pageIndex]){
+      pages[msg.pageIndex].type = msg.paperType;
+      if(msg.pageIndex === page) document.getElementById('paperType').value = msg.paperType;
+      renderPages();
+      render();
+    }
+  }
+  else if(msg.type === 'full_sync'){
+    pages = msg.pages;
+    page = Math.min(msg.page, pages.length - 1);
+    document.getElementById('paperType').value = pages[page].type;
+    renderPages();
+    render();
+  }
+}
+
+/* Tworzenie pokoju przez nauczyciela */
+document.getElementById('createRoomBtn').onclick = () => {
+  if(peer) peer.destroy();
+  connections = [];
+  isHost = true;
+  const code = 'MAT-' + Math.floor(1000 + Math.random() * 9000);
+  currentRoomCode = code;
+  setLiveUI('waiting', 'Tworzenie pokoju LIVE...', code);
+
+  peer = new Peer('matplus-' + code.toLowerCase());
+  peer.on('open', () => {
+    updateParticipantsUI();
+    // Zapisz kod w URL, by odświeżenie lub skopiowanie linku działało wygodnie
+    const url = new URL(window.location.href);
+    url.searchParams.set('room', code);
+    window.history.replaceState({}, '', url);
+  });
+  peer.on('connection', conn => setupConnection(conn));
+  peer.on('error', err => {
+    setLiveUI('offline', 'Błąd połączenia: ' + err.type);
+  });
+};
+
+/* Dołączanie ucznia do pokoju */
+function joinRoom(rawCode){
+  const code = rawCode.trim().toUpperCase();
+  if(!code){ alert('Wpisz kod pokoju (np. MAT-1234).'); return; }
+  if(peer) peer.destroy();
+  connections = [];
+  isHost = false;
+  currentRoomCode = code;
+  if(document.getElementById('userNameInput').value === 'Nauczyciel'){
+    document.getElementById('userNameInput').value = 'Uczeń';
+  }
+  setLiveUI('waiting', 'Łączenie z pokojem ' + code + '...', code);
+
+  peer = new Peer();
+  peer.on('open', () => {
+    const conn = peer.connect('matplus-' + code.toLowerCase(), {reliable: true});
+    setupConnection(conn);
+  });
+  peer.on('error', err => {
+    setLiveUI('offline', 'Nie znaleziono pokoju ' + code + ' (' + err.type + ')');
+  });
+}
+
+document.getElementById('joinRoomBtn').onclick = () => joinRoom(document.getElementById('joinCodeInput').value);
+
+document.getElementById('copyLinkBtn').onclick = () => {
+  const url = new URL(window.location.href);
+  url.searchParams.set('room', currentRoomCode);
+  navigator.clipboard.writeText(url.toString()).then(() => {
+    const btn = document.getElementById('copyLinkBtn');
+    btn.textContent = '✓ Skopiowano link!';
+    setTimeout(() => btn.textContent = '🔗 Kopiuj link', 2200);
+  });
+};
+
+/* Automatyczne dołączenie jeśli otwarto link z parametrem ?room=MAT-XXXX */
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+renderPages();
+setTool('pen');
+
+const urlRoom = new URLSearchParams(window.location.search).get('room');
+if(urlRoom){
+  showView('board');
+  document.getElementById('joinCodeInput').value = urlRoom;
+  setTimeout(() => joinRoom(urlRoom), 250);
+}
+</script>
+</body>
+</html>

@@ -3,24 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MATEMATYKA+ | Tablice i Strefa Ucznia</title>
+<title>MATEMATYKA+ | Tablica LIVE jak eTuti</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 <style>
-:root{--bg:#0f0f12;--panel:#18181c;--panel2:#212127;--gold:#d6b56d;--gold2:#f0d99e;--muted:#9e9b95;--line:#2e2d33;--white:#f7f5ef;--green:#3fb950;--red:#f85149}
+:root{--bg:#0f0f12;--panel:#18181c;--panel2:#212127;--gold:#d6b56d;--gold2:#f0d99e;--muted:#9e9b95;--line:#2e2d33;--white:#f7f5ef;--green:#3fb950}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--white);font:14px/1.4 Inter,system-ui,-apple-system,sans-serif}
 button,input,select{font:inherit}button{cursor:pointer}
 
-/* WIDOKI (PANEL / TABLICA) */
 .view{display:none}.view.active{display:block}
 
-/* DASHBOARD / PANEL GŁÓWNY */
+/* DASHBOARD / FOLDERY */
 .dashboard{max-width:1100px;margin:30px auto;padding:20px}
 .dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;border-bottom:1px solid var(--line);padding-bottom:20px}
-.brand{font-size:22px;font-weight:800;letter-spacing:1px}
-.brand span{color:var(--gold)}
+.brand{font-size:22px;font-weight:800;letter-spacing:1px}.brand span{color:var(--gold)}
 .dash-tabs{display:flex;gap:10px}
 .dash-tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:8px 16px;border-radius:8px;font-weight:600}
 .dash-tab.active{border-color:var(--gold);color:var(--gold2);background:#252017}
@@ -40,7 +38,7 @@ button,input,select{font:inherit}button{cursor:pointer}
 .tool:hover{background:#2f2f36;border-color:#5b5963}
 .tool.active{border-color:var(--gold);color:var(--gold2);background:#302719}
 
-/* EDYTOR TABLICY LIVE */
+/* EDYTOR TABLICY */
 .board-shell{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 .topbar{height:54px;background:#131317;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
 .topbar-left{display:flex;align-items:center;gap:12px}
@@ -60,14 +58,24 @@ input,select{background:#101014;border:1px solid var(--line);border-radius:8px;p
 .paper{background:#fff;width:100%;height:100%;border-radius:6px;position:relative;box-shadow:0 6px 24px rgba(0,0,0,.5);overflow:hidden}
 canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 
-/* WBUDOWANY EDYTOR WZORÓW */
-.math-editor-box{position:absolute;z-index:30;background:#18181d;border:2px solid var(--gold);border-radius:10px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);width:310px;display:none;flex-direction:column;gap:8px}
-.math-editor-box textarea{width:100%;background:#101013;border:1px solid var(--line);color:var(--white);padding:8px;border-radius:6px;resize:vertical;min-height:65px;font-family:monospace;font-size:14px;outline:none}
-.math-sym-row{display:flex;gap:4px;flex-wrap:wrap}
-.math-sym-btn{background:#25252b;border:1px solid #3c3b42;color:#f0d99e;padding:3px 6px;border-radius:4px;font-size:11px;font-weight:bold}
-.math-sym-btn:hover{background:#33333d}
-.math-preview{background:#fff;color:#111;padding:6px;border-radius:4px;min-height:28px;font-size:15px;overflow-x:auto}
-.board-math-item{position:absolute;z-index:5;padding:4px 8px;border-radius:4px;pointer-events:none;font-size:18px;background:rgba(255,255,255,0.92);box-shadow:0 2px 8px rgba(0,0,0,0.1);color:#111}
+/* ETUTI STYLE - PŁYWAJĄCY PANEL WZORÓW I PISANIA W LINII */
+.floating-math-toolbar{
+  position:absolute;top:15px;left:50%;transform:translateX(-50%);z-index:25;
+  background:#1a1a20;border:1px solid var(--gold);border-radius:10px;padding:6px 12px;
+  display:flex;align-items:center;gap:6px;box-shadow:0 6px 20px rgba(0,0,0,0.5);flex-wrap:wrap;max-width:90%;
+}
+.f-btn{background:#26262d;border:1px solid #3d3c45;color:var(--gold2);padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600}
+.f-btn:hover{background:#33333d}
+
+/* EDYTOR TEKSTU BEZPOŚREDNIO NA PŁÓTNIE JAK WORD */
+.inline-text-editor{
+  position:absolute;z-index:20;background:rgba(255,255,255,0.96);border:2px dashed var(--gold);
+  border-radius:6px;padding:8px 12px;min-width:220px;box-shadow:0 4px 15px rgba(0,0,0,0.2);
+  color:#111;outline:none;font-family:Inter,sans-serif;font-size:16px;
+}
+.inline-text-editor:focus{border-style:solid}
+
+.board-math-item{position:absolute;z-index:5;padding:4px 8px;border-radius:4px;pointer-events:none;background:rgba(255,255,255,0.92);box-shadow:0 2px 8px rgba(0,0,0,0.1);color:#111}
 
 .remote-cursor{position:absolute;pointer-events:none;z-index:15;transform:translate(-2px,-2px);transition:left .04s linear,top .04s linear;display:none}
 .remote-cursor svg{width:16px;height:16px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
@@ -83,11 +91,11 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 </head>
 <body>
 
-<!-- ================= PANEL / DASHBOARD ================= -->
+<!-- PANEL / FOLDERY -->
 <div id="dashboardView" class="view active">
   <div class="dashboard">
     <div class="dash-header">
-      <div class="brand">MATEMATYKA<span>+</span> | Panel Korepetytora i Ucznia</div>
+      <div class="brand">MATEMATYKA<span>+</span> | Panel Nauczyciela i Strefa Ucznia</div>
       <div class="dash-tabs">
         <button class="dash-tab active" onclick="switchDashTab('teacher')">Panel Nauczyciela</button>
         <button class="dash-tab" onclick="switchDashTab('student')">Strefa Ucznia</button>
@@ -97,17 +105,16 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <div>
         <h2 id="dashTitle" style="margin:0;color:var(--gold2)">Twoje Tablice i Materiały</h2>
-        <p style="margin:4px 0 0;color:var(--muted)" id="dashSubtitle">Twórz tablice, udostępniaj linki uczniom i wracaj do archiwalnych lekcji.</p>
+        <p style="margin:4px 0 0;color:var(--muted)" id="dashSubtitle">Wybierz folder lub utwórz nową tablicę do lekcji online.</p>
       </div>
       <button class="goldbtn" onclick="createNewBoardModal()">＋ Utwórz nową tablicę</button>
     </div>
 
-    <!-- FOLDERY I TABLICE -->
     <div id="foldersContainer"></div>
   </div>
 </div>
 
-<!-- ================= WIDOK TABLICY LIVE ================= -->
+<!-- WIDOK TABLICY LIVE -->
 <div id="boardView" class="view">
   <div class="board-shell">
     <header class="topbar">
@@ -131,7 +138,7 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
       <button class="tool" id="lineBtn">╱ Linia</button>
       <button class="tool" id="rectBtn">▢ Prostokąt</button>
       <button class="tool" id="ellipseBtn">◯ Okrąg</button>
-      <button class="tool" id="textBtn">T Wzór</button>
+      <button class="tool" id="textBtn">T Pisanie (Word)</button>
       <span class="sep"></span>
       <label class="lbl">Kolor <input id="ink" type="color" value="#171717" style="width:30px;height:26px;padding:1px"></label>
       <label class="lbl">Grubość <input id="width" type="range" min="1" max="16" value="3" style="width:65px"></label>
@@ -157,21 +164,18 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
         <div class="paper" id="paperBox">
           <canvas id="whiteboard"></canvas>
 
-          <div class="math-editor-box" id="mathEditorBox">
-            <div style="font-size:12px;color:var(--gold2);font-weight:bold">Wpisz wzór matematyczny:</div>
-            <div class="math-sym-row">
-              <button class="math-sym-btn" type="button" onclick="insertMathSnippet('\\frac{a}{b}')">Ułamek</button>
-              <button class="math-sym-btn" type="button" onclick="insertMathSnippet('x^2')">Potęga</button>
-              <button class="math-sym-btn" type="button" onclick="insertMathSnippet('\\sqrt{x}')">Pierwiastek</button>
-              <button class="math-sym-btn" type="button" onclick="insertMathSnippet('\\alpha')">α</button>
-              <button class="math-sym-btn" type="button" onclick="insertMathSnippet('\\pi')">π</button>
-            </div>
-            <textarea id="mathInputText" placeholder="np. \frac{3}{4} x^2"></textarea>
-            <div class="math-preview" id="mathPreviewBox"></div>
-            <div style="display:flex;justify-content:flex-end;gap:5px">
-              <button class="tool" type="button" onclick="closeMathEditor()">Anuluj</button>
-              <button class="goldbtn" type="button" onclick="commitMathEditor()" style="padding:5px 10px">Wstaw</button>
-            </div>
+          <!-- ETUTI STYLE FLOATING MATH TOOLBAR (Pojawia się podczas pisania tekstu) -->
+          <div class="floating-math-toolbar" id="floatingMathToolbar" style="display:none">
+            <span style="font-size:11px;color:var(--muted)">Wzory:</span>
+            <button class="f-btn" type="button" onclick="insertSnippet('\\frac{a}{b}')">a/b</button>
+            <button class="f-btn" type="button" onclick="insertSnippet('x^2')">x²</button>
+            <button class="f-btn" type="button" onclick="insertSnippet('\\sqrt{x}')">√x</button>
+            <button class="f-btn" type="button" onclick="insertSnippet('\\alpha')">α</button>
+            <button class="f-btn" type="button" onclick="insertSnippet('\\pi')">π</button>
+            <button class="f-btn" type="button" onclick="insertSnippet('\\int')">∫</button>
+            <button class="f-btn" type="button" onclick="insertSnippet('\\infty')">∞</button>
+            <span style="color:var(--line)">|</span>
+            <button class="goldbtn" style="padding:3px 8px;font-size:12px" onclick="commitInlineText()">✓ Zapisz tekst (Enter)</button>
           </div>
 
           <div class="remote-cursor" id="remoteCursor">
@@ -190,7 +194,7 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
           <button class="tool" id="deletePage" style="width:100%;margin-top:5px">Usuń</button>
         </div>
         <div style="font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px">
-          Każda zmiana zapisuje się automatycznie w tle.
+          Automatyczny zapis zmian w tle.
         </div>
       </aside>
     </div>
@@ -198,7 +202,6 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 </div>
 
 <script>
-/* ================= SYSTEM ZARZĄDZANIA TABLICAMI I FOLDERAMI ================= */
 const DEFAULT_FOLDERS = [
   { id: 'podstawa', name: 'Matematyka Podstawowa' },
   { id: 'rozszerzenie', name: 'Matematyka Rozszerzona' },
@@ -225,7 +228,7 @@ function switchDashTab(tab){
     el.classList.toggle('active', (i === 0 && tab === 'teacher') || (i === 1 && tab === 'student'));
   });
   document.getElementById('dashTitle').textContent = tab === 'teacher' ? 'Panel Nauczyciela' : 'Strefa Ucznia';
-  document.getElementById('dashSubtitle').textContent = tab === 'teacher' ? 'Zarządzaj swoimi tablicami, twórz nowe lekcje i organizuj materiały.' : 'Przeglądaj materiały z lekcji i wracaj do archiwalnych tablic w dowolnym momencie.';
+  document.getElementById('dashSubtitle').textContent = tab === 'teacher' ? 'Zarządzaj swoimi tablicami i materiałami.' : 'Przeglądaj materiały z lekcji i archiwalne tablice.';
   renderDashboard();
 }
 
@@ -261,29 +264,19 @@ function renderDashboard(){
 function createNewBoardModal(){
   const title = prompt('Podaj tytuł nowej lekcji / tablicy:', 'Lekcja maturalna - ');
   if(!title) return;
-  const folder = prompt('Wybierz folder (wpisz ID lub nazwę):\n1. podstawa (Matematyka Podstawowa)\n2. rozszerzenie (Matematyka Rozszerzona)\n3. domowe (Zadania Domowe)', 'podstawa');
+  const folder = prompt('Wybierz folder (wpisz ID):\n1. podstawa\n2. rozszerzenie\n3. domowe', 'podstawa');
   const targetFolder = DEFAULT_FOLDERS.some(f => f.id === folder) ? folder : 'podstawa';
 
   const newId = 'board-' + Math.random().toString(36.2).substring(2, 10);
   const boards = getStoredBoards();
-  const newBoard = {
-    id: newId,
-    title: title,
-    folder: targetFolder,
-    date: new Date().toISOString().split('T')[0],
-    pages: [{id: 'p1', type: 'grid', items: []}],
-    currentPage: 0
-  };
-  boards.push(newBoard);
+  boards.push({ id: newId, title, folder: targetFolder, date: new Date().toISOString().split('T')[0], pages: [{id: 'p1', type: 'grid', items: []}], currentPage: 0 });
   saveStoredBoards(boards);
   openBoard(newId);
 }
 
 function deleteBoard(id){
-  if(confirm('Czy na pewno chcesz usunąć tę tablicę?')){
-    let boards = getStoredBoards();
-    boards = boards.filter(b => b.id !== id);
-    saveStoredBoards(boards);
+  if(confirm('Usunąć tę tablicę?')){
+    saveStoredBoards(getStoredBoards().filter(b => b.id !== id));
     renderDashboard();
   }
 }
@@ -296,17 +289,9 @@ function goHome(){
   renderDashboard();
 }
 
-/* ================= LOGIKA TABLICY LIVE (P2P + AUTOMATYCZNY ZAPIS) ================= */
-let activeBoardId = null;
-let pages = [];
-let page = 0;
-let tool = 'pen';
-let drawing = false;
-let current = null;
-let remoteActiveItem = null;
-let laserPoints = [];
-let redoStack = [];
-let mathEditorPos = {x: 50, y: 50};
+/* TABLICA I PISANIE W STYLU WORD / ETUTI BEZPOŚREDNIE NA PŁÓTNIE */
+let activeBoardId = null, pages = [], page = 0, tool = 'pen', drawing = false, current = null, remoteActiveItem = null, laserPoints = [], redoStack = [];
+let activeInlineEditor = null; // element edytora tekstowego na żywo
 
 function openBoard(id){
   activeBoardId = id;
@@ -325,23 +310,14 @@ function openBoard(id){
   url.searchParams.set('board', id);
   window.history.replaceState({}, '', url);
 
-  setTimeout(() => {
-    resizeCanvas();
-    renderPages();
-    render();
-    initLivePeer(id);
-  }, 50);
+  setTimeout(() => { resizeCanvas(); renderPages(); render(); initLivePeer(id); }, 50);
 }
 
 function saveCurrentBoardData(){
   if(!activeBoardId) return;
   const boards = getStoredBoards();
   const idx = boards.findIndex(b => b.id === activeBoardId);
-  if(idx !== -1){
-    boards[idx].pages = pages;
-    boards[idx].currentPage = page;
-    saveStoredBoards(boards);
-  }
+  if(idx !== -1){ boards[idx].pages = pages; boards[idx].currentPage = page; saveStoredBoards(boards); }
 }
 
 document.getElementById('copyBoardLinkBtn').onclick = () => {
@@ -352,7 +328,6 @@ document.getElementById('copyBoardLinkBtn').onclick = () => {
   });
 };
 
-/* --- RYSOWANIE I KANWA --- */
 const canvas = document.getElementById('whiteboard');
 const ctx = canvas.getContext('2d');
 const paper = document.getElementById('paperBox');
@@ -364,19 +339,14 @@ function dimensions(){ return {w: Math.max(300, paper.clientWidth), h: Math.max(
 
 function resizeCanvas(){
   const {w, h} = dimensions();
-  canvas.width = w * dpr();
-  canvas.height = h * dpr();
-  ctx.setTransform(dpr(), 0, 0, dpr(), 0, 0);
-  render();
+  canvas.width = w * dpr(); canvas.height = h * dpr();
+  ctx.setTransform(dpr(), 0, 0, dpr(), 0, 0); render();
 }
 
 function drawPaper(type){
   const {w, h} = dimensions();
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, w, h);
-  ctx.save();
-  ctx.strokeStyle = '#e5e8ed';
-  ctx.lineWidth = 1;
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
+  ctx.save(); ctx.strokeStyle = '#e5e8ed'; ctx.lineWidth = 1;
   if(type === 'grid'){
     for(let x = 24; x < w; x += 24){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
     for(let y = 24; y < h; y += 24){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
@@ -420,23 +390,14 @@ function renderMathItemOnPaper(item){
 
 function drawItem(item){
   const {w, h} = dimensions();
-  ctx.save();
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   if(item.kind === 'stroke'){
-    ctx.strokeStyle = item.color;
-    ctx.lineWidth = item.width;
-    ctx.beginPath();
-    item.points.forEach((p, i) => {
-      const px = p.nx * w, py = p.ny * h;
-      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-    });
+    ctx.strokeStyle = item.color; ctx.lineWidth = item.width; ctx.beginPath();
+    item.points.forEach((p, i) => { const px = p.nx * w, py = p.ny * h; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
     if(item.points.length === 1) ctx.lineTo(item.points[0].nx * w + 0.1, item.points[0].ny * h + 0.1);
     ctx.stroke();
   } else if(item.kind === 'shape'){
-    ctx.strokeStyle = item.color;
-    ctx.lineWidth = item.width;
+    ctx.strokeStyle = item.color; ctx.lineWidth = item.width;
     const x1 = item.nx1 * w, y1 = item.ny1 * h, x2 = item.nx2 * w, y2 = item.ny2 * h;
     const x = Math.min(x1, x2), y = Math.min(y1, y2), sw = Math.abs(x2 - x1), sh = Math.abs(y2 - y1);
     ctx.beginPath();
@@ -446,12 +407,7 @@ function drawItem(item){
     ctx.stroke();
   } else if(item.kind === 'image' && item.src){
     let img = imageCache.get(item.src);
-    if(!img){
-      img = new Image();
-      img.onload = () => render();
-      img.src = item.src;
-      imageCache.set(item.src, img);
-    }
+    if(!img){ img = new Image(); img.onload = () => render(); img.src = item.src; imageCache.set(item.src, img); }
     if(img.complete && img.naturalWidth > 0) ctx.drawImage(img, item.nx * w, item.ny * h, item.nw * w, item.nh * h);
   }
   ctx.restore();
@@ -467,19 +423,11 @@ function drawLaser(){
   for(let i = 1; i < laserPoints.length; i++){
     const p0 = laserPoints[i-1], p1 = laserPoints[i];
     const alpha = Math.max(0, 1 - (now - p1.t) / 750);
-    ctx.strokeStyle = `rgba(240, 50, 50, ${alpha})`;
-    ctx.lineWidth = 5 * alpha + 1;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(p0.nx * w, p0.ny * h);
-    ctx.lineTo(p1.nx * w, p1.ny * h);
-    ctx.stroke();
+    ctx.strokeStyle = `rgba(240, 50, 50, ${alpha})`; ctx.lineWidth = 5 * alpha + 1; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(p0.nx * w, p0.ny * h); ctx.lineTo(p1.nx * w, p1.ny * h); ctx.stroke();
   }
   const last = laserPoints[laserPoints.length - 1];
-  ctx.fillStyle = '#ff2a2a';
-  ctx.beginPath();
-  ctx.arc(last.nx * w, last.ny * h, 5, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.fillStyle = '#ff2a2a'; ctx.beginPath(); ctx.arc(last.nx * w, last.ny * h, 5, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
   requestAnimationFrame(render);
 }
@@ -493,12 +441,12 @@ function normPoint(e){
 }
 
 function setTool(t){
+  if(activeInlineEditor) commitInlineText();
   tool = t;
   ['pen','laser','eraser','line','rect','ellipse','text'].forEach(k => {
     document.getElementById(k + 'Btn').classList.toggle('active', t === k);
   });
   canvas.style.cursor = t === 'text' ? 'text' : t === 'eraser' ? 'cell' : t === 'laser' ? 'pointer' : 'crosshair';
-  if(t !== 'text') closeMathEditor();
 }
 
 const getColor = () => document.getElementById('ink').value;
@@ -514,17 +462,11 @@ canvas.addEventListener('pointerdown', e => {
     render(); return;
   }
   if(tool === 'text'){
-    mathEditorPos = p;
-    const box = document.getElementById('mathEditorBox');
-    const {w, h} = dimensions();
-    box.style.left = Math.min(w - 320, Math.max(10, p.nx * w)) + 'px';
-    box.style.top = Math.min(h - 200, Math.max(10, p.ny * h)) + 'px';
-    box.style.display = 'flex';
-    document.getElementById('mathInputText').value = '';
-    document.getElementById('mathPreviewBox').textContent = '';
-    document.getElementById('mathInputText').focus();
+    if(activeInlineEditor) commitInlineText();
+    createInlineEditor(p.nx, p.ny);
     return;
   }
+
   drawing = true; canvas.setPointerCapture(e.pointerId);
   if(tool === 'pen' || tool === 'eraser'){
     current = {id: uid(), kind: 'stroke', color: tool === 'eraser' ? '#ffffff' : getColor(), width: tool === 'eraser' ? getWidth()*5 : getWidth(), points: [p]};
@@ -535,26 +477,57 @@ canvas.addEventListener('pointerdown', e => {
   render();
 });
 
-const mathInputText = document.getElementById('mathInputText');
-mathInputText.oninput = () => {
-  try { katex.render(mathInputText.value, document.getElementById('mathPreviewBox'), {displayMode: false, throwOnError: false}); }
-  catch(e){ document.getElementById('mathPreviewBox').textContent = mathInputText.value; }
-};
-function insertMathSnippet(snippet){
-  const ta = mathInputText;
-  const start = ta.selectionStart;
-  ta.value = ta.value.substring(0, start) + snippet + ta.value.substring(ta.selectionEnd);
-  ta.focus();
+/* WBUDOWANY EDYTOR BEZPOŚREDNIE NA PŁÓTNIE JAK ETUTI / WORD */
+function createInlineEditor(nx, ny){
+  const {w, h} = dimensions();
+  const div = document.createElement('div');
+  div.className = 'inline-text-editor';
+  div.contentEditable = true;
+  div.style.left = (nx * w) + 'px';
+  div.style.top = (ny * h) + 'px';
+  div.dataset.nx = nx; div.dataset.ny = ny;
+  div.innerHTML = '';
+  
+  paper.appendChild(div);
+  activeInlineEditor = div;
+  div.focus();
+
+  document.getElementById('floatingMathToolbar').style.display = 'flex';
+
+  div.onkeydown = e => {
+    if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
+      e.preventDefault();
+      commitInlineText();
+    } else if(e.key === 'Escape'){
+      div.remove();
+      activeInlineEditor = null;
+      document.getElementById('floatingMathToolbar').style.display = 'none';
+    }
+  };
 }
-function closeMathEditor(){ document.getElementById('mathEditorBox').style.display = 'none'; }
-function commitMathEditor(){
-  const text = mathInputText.value.trim();
-  if(!text){ closeMathEditor(); return; }
-  const item = {id: uid(), kind: 'math', text, nx: mathEditorPos.nx, ny: mathEditorPos.ny, color: getColor()};
-  pages[page].items.push(item);
-  redoStack = [];
-  broadcast({type: 'item_commit', pageIndex: page, item});
-  closeMathEditor();
+
+function insertSnippet(snippet){
+  if(!activeInlineEditor) return;
+  activeInlineEditor.focus();
+  document.execCommand('insertText', false, snippet);
+}
+
+function commitInlineText(){
+  if(!activeInlineEditor) return;
+  const text = activeInlineEditor.textContent.trim();
+  const nx = parseFloat(activeInlineEditor.dataset.nx);
+  const ny = parseFloat(activeInlineEditor.dataset.ny);
+
+  if(text){
+    const item = {id: uid(), kind: 'math', text, nx, ny, color: getColor()};
+    pages[page].items.push(item);
+    redoStack = [];
+    broadcast({type: 'item_commit', pageIndex: page, item});
+  }
+
+  activeInlineEditor.remove();
+  activeInlineEditor = null;
+  document.getElementById('floatingMathToolbar').style.display = 'none';
   render();
 }
 
@@ -587,8 +560,7 @@ function finishDraw(){
     broadcast({type: 'item_commit', pageIndex: page, item: current});
     current = null;
   }
-  renderPages();
-  render();
+  renderPages(); render();
 }
 canvas.addEventListener('pointerup', finishDraw);
 canvas.addEventListener('pointercancel', finishDraw);
@@ -601,8 +573,8 @@ function renderPages(){
     b.className = 'page-thumb' + (i === page ? ' active' : '');
     b.innerHTML = `Strona ${i + 1}<small>${p.items.length} elementów</small>`;
     b.onclick = () => {
-      page = i;
-      document.getElementById('paperType').value = p.type;
+      if(activeInlineEditor) commitInlineText();
+      page = i; document.getElementById('paperType').value = p.type;
       broadcast({type: 'page_switch', pageIndex: page});
       renderPages(); render();
     };
@@ -624,37 +596,44 @@ document.getElementById('paperType').onchange = e => {
 };
 
 document.getElementById('undoBtn').onclick = () => {
+  if(activeInlineEditor) commitInlineText();
   const item = pages[page].items.pop();
   if(item){ redoStack.push(item); broadcast({type: 'full_sync', pages, page}); renderPages(); render(); }
 };
 document.getElementById('redoBtn').onclick = () => {
+  if(activeInlineEditor) commitInlineText();
   const item = redoStack.pop();
   if(item){ pages[page].items.push(item); broadcast({type: 'full_sync', pages, page}); renderPages(); render(); }
 };
 document.getElementById('clearBtn').onclick = () => {
+  if(activeInlineEditor) commitInlineText();
   if(confirm('Wyczyścić stronę?')){ pages[page].items = []; redoStack = []; broadcast({type: 'full_sync', pages, page}); renderPages(); render(); }
 };
 document.getElementById('addPage').onclick = () => {
+  if(activeInlineEditor) commitInlineText();
   pages.push({id: uid(), type: document.getElementById('paperType').value, items: []});
   page = pages.length - 1; redoStack = [];
   broadcast({type: 'full_sync', pages, page}); renderPages(); render();
 };
 document.getElementById('duplicatePage').onclick = () => {
+  if(activeInlineEditor) commitInlineText();
   const copy = JSON.parse(JSON.stringify(pages[page])); copy.id = uid();
   pages.splice(page + 1, 0, copy); page++;
   broadcast({type: 'full_sync', pages, page}); renderPages(); render();
 };
 document.getElementById('deletePage').onclick = () => {
+  if(activeInlineEditor) commitInlineText();
   if(pages.length === 1) return;
   pages.splice(page, 1); page = Math.max(0, page - 1);
   broadcast({type: 'full_sync', pages, page}); renderPages(); render();
 };
 
 document.getElementById('downloadBtn').onclick = () => {
+  if(activeInlineEditor) commitInlineText();
   const a = document.createElement('a'); a.download = 'tablica.png'; a.href = canvas.toDataURL('image/png'); a.click();
 };
 
-/* --- AUTOMATYCZNE ŁĄCZENIE P2P BEZ KODÓW --- */
+/* P2P LIVE SYNC */
 let peer = null, connections = [], isHost = false;
 const remoteCursorEl = document.getElementById('remoteCursor');
 
@@ -664,18 +643,10 @@ function initLivePeer(boardId){
   const peerId = 'matplus-board-' + boardId.toLowerCase();
   
   peer = new Peer(peerId);
-  peer.on('open', () => {
-    isHost = true;
-    setLiveStatus('online', 'LIVE (Gospodarz)');
-  });
+  peer.on('open', () => { isHost = true; setLiveStatus('online', 'LIVE (Gospodarz)'); });
   peer.on('error', () => {
-    // Jeśli ID jest zajęte, to znaczy że gospodarz już czeka – łączymy się jako klient
-    isHost = false;
-    peer = new Peer();
-    peer.on('open', () => {
-      const conn = peer.connect(peerId, {reliable: true});
-      setupConnection(conn);
-    });
+    isHost = false; peer = new Peer();
+    peer.on('open', () => { setupConnection(peer.connect(peerId, {reliable: true})); });
   });
   peer.on('connection', conn => setupConnection(conn));
 }
@@ -730,15 +701,11 @@ function setupConnection(conn){
 
 window.addEventListener('resize', resizeCanvas);
 
-/* --- INICJALIZACJA STARTOWA --- */
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const boardParam = urlParams.get('board');
-  if(boardParam){
-    openBoard(boardParam);
-  } else {
-    renderDashboard();
-  }
+  if(boardParam){ openBoard(boardParam); }
+  else { renderDashboard(); }
 });
 </script>
 </body>

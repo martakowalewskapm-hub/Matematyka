@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MATEMATYKA+ | Tablica LIVE jak eTuti</title>
+<title>MATEMATYKA+ | Tablica LIVE i Strefa Ucznia</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 <style>
-:root{--bg:#0f0f12;--panel:#18181c;--panel2:#212127;--gold:#d6b56d;--gold2:#f0d99e;--muted:#9e9b95;--line:#2e2d33;--white:#f7f5ef;--green:#3fb950}
+:root{--bg:#0f0f12;--panel:#18181c;--panel2:#212127;--gold:#d6b56d;--gold2:#f0d99e;--muted:#9e9b95;--line:#2e2d33;--white:#f7f5ef;--green:#3fb950;--red:#f85149}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--white);font:14px/1.4 Inter,system-ui,-apple-system,sans-serif}
 button,input,select{font:inherit}button{cursor:pointer}
@@ -17,7 +17,7 @@ button,input,select{font:inherit}button{cursor:pointer}
 
 /* DASHBOARD / FOLDERY */
 .dashboard{max-width:1100px;margin:30px auto;padding:20px}
-.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;border-bottom:1px solid var(--line);padding-bottom:20px}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;border-bottom:1px solid var(--line);padding-bottom:20px;flex-wrap:wrap;gap:12px}
 .brand{font-size:22px;font-weight:800;letter-spacing:1px}.brand span{color:var(--gold)}
 .dash-tabs{display:flex;gap:10px}
 .dash-tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:8px 16px;border-radius:8px;font-weight:600}
@@ -25,24 +25,37 @@ button,input,select{font:inherit}button{cursor:pointer}
 
 .folder-section{margin-bottom:35px}
 .folder-title{font-size:18px;color:var(--gold2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.boards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:15px}
+.boards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:15px}
 .board-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:.15s}
 .board-card:hover{border-color:#554c38;transform:translateY(-2px)}
 .board-card h4{margin:0;font-size:16px;color:var(--white)}
 .board-card .date{font-size:12px;color:var(--muted)}
-.card-actions{display:flex;gap:8px;margin-top:auto}
+.card-actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
 
 .goldbtn{background:var(--gold);color:#17130b;border:0;border-radius:8px;padding:8px 16px;font-weight:700}
 .goldbtn:hover{background:var(--gold2)}
 .tool{background:#242429;border:1px solid #3a3940;color:#eee;padding:7px 12px;border-radius:8px;font-size:13px}
-.tool:hover{background:#2f2f36;border-color:#5b5963}
+.tool:hover:not(:disabled){background:#2f2f36;border-color:#5b5963}
 .tool.active{border-color:var(--gold);color:var(--gold2);background:#302719}
+.tool:disabled{opacity:.35;cursor:not-allowed}
+
+/* MODAL TWORZENIA TABLICY */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:50;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop.open{display:flex}
+.modal-box{background:var(--panel);border:1px solid var(--gold);border-radius:14px;padding:24px;width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px}
+.modal-box h3{margin:0;color:var(--gold2);font-size:18px}
+.modal-box label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.modal-box input,.modal-box select{width:100%;background:#101014;border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--white);outline:none}
+.modal-box input:focus,.modal-box select:focus{border-color:var(--gold)}
+
+/* POWIADOMIENIE TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#211d15;border:1px solid var(--gold);color:var(--gold2);padding:12px 18px;border-radius:10px;font-weight:600;z-index:100;box-shadow:0 8px 25px rgba(0,0,0,.6);display:none}
 
 /* EDYTOR TABLICY */
 .board-shell{height:100vh;display:flex;flex-direction:column;overflow:hidden}
-.topbar{height:54px;background:#131317;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
-.topbar-left{display:flex;align-items:center;gap:12px}
-.status-pill{display:flex;align-items:center;gap:6px;background:#1c1c21;border:1px solid var(--line);padding:4px 10px;border-radius:20px;font-size:12px}
+.topbar{height:54px;background:#131317;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:10px}
+.topbar-left{display:flex;align-items:center;gap:10px;min-width:0}
+.status-pill{display:flex;align-items:center;gap:6px;background:#1c1c21;border:1px solid var(--line);padding:4px 10px;border-radius:20px;font-size:12px;white-space:nowrap}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
 .dot.waiting{background:var(--gold);animation:pulse 1.4s infinite}
@@ -62,12 +75,11 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 .floating-math-toolbar{
   position:absolute;top:15px;left:50%;transform:translateX(-50%);z-index:25;
   background:#1a1a20;border:1px solid var(--gold);border-radius:10px;padding:6px 12px;
-  display:flex;align-items:center;gap:6px;box-shadow:0 6px 20px rgba(0,0,0,0.5);flex-wrap:wrap;max-width:90%;
+  display:flex;align-items:center;gap:6px;box-shadow:0 6px 20px rgba(0,0,0,0.5);flex-wrap:wrap;max-width:92%;
 }
 .f-btn{background:#26262d;border:1px solid #3d3c45;color:var(--gold2);padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600}
 .f-btn:hover{background:#33333d}
 
-/* EDYTOR TEKSTU BEZPOŚREDNIO NA PŁÓTNIE JAK WORD */
 .inline-text-editor{
   position:absolute;z-index:20;background:rgba(255,255,255,0.96);border:2px dashed var(--gold);
   border-radius:6px;padding:8px 12px;min-width:220px;box-shadow:0 4px 15px rgba(0,0,0,0.2);
@@ -95,22 +107,45 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 <div id="dashboardView" class="view active">
   <div class="dashboard">
     <div class="dash-header">
-      <div class="brand">MATEMATYKA<span>+</span> | Panel Nauczyciela i Strefa Ucznia</div>
+      <div class="brand">MATEMATYKA<span>+</span> | Tablice i Materiały</div>
       <div class="dash-tabs">
         <button class="dash-tab active" onclick="switchDashTab('teacher')">Panel Nauczyciela</button>
         <button class="dash-tab" onclick="switchDashTab('student')">Strefa Ucznia</button>
       </div>
     </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
       <div>
-        <h2 id="dashTitle" style="margin:0;color:var(--gold2)">Twoje Tablice i Materiały</h2>
-        <p style="margin:4px 0 0;color:var(--muted)" id="dashSubtitle">Wybierz folder lub utwórz nową tablicę do lekcji online.</p>
+        <h2 id="dashTitle" style="margin:0;color:var(--gold2)">Panel Nauczyciela</h2>
+        <p style="margin:4px 0 0;color:var(--muted)" id="dashSubtitle">Twórz tablice w folderach i udostępniaj je uczniom jednym kliknięciem.</p>
       </div>
-      <button class="goldbtn" onclick="createNewBoardModal()">＋ Utwórz nową tablicę</button>
+      <button class="goldbtn" id="newBoardMainBtn" onclick="openCreateModal()">＋ Utwórz nową tablicę</button>
     </div>
 
     <div id="foldersContainer"></div>
+  </div>
+</div>
+
+<!-- OKNO TWORZENIA NOWEJ TABLICY -->
+<div class="modal-backdrop" id="createModal">
+  <div class="modal-box">
+    <h3>Nowa tablica lekcyjna</h3>
+    <div>
+      <label>Temat / nazwa tablicy</label>
+      <input id="newBoardTitle" placeholder="np. Funkcja kwadratowa - zadania maturalne">
+    </div>
+    <div>
+      <label>Wybierz folder (pojawi się też w Strefie Ucznia)</label>
+      <select id="newBoardFolder">
+        <option value="podstawa">📁 Matematyka Podstawowa</option>
+        <option value="rozszerzenie">📁 Matematyka Rozszerzona</option>
+        <option value="domowe">📁 Zadania Domowe i Powtórki</option>
+      </select>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+      <button class="tool" onclick="closeCreateModal()">Anuluj</button>
+      <button class="goldbtn" onclick="confirmCreateBoard()">Utwórz i otwórz →</button>
+    </div>
   </div>
 </div>
 
@@ -119,15 +154,16 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
   <div class="board-shell">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="tool" onclick="goHome()">← Powrót do paneli</button>
-        <div style="font-weight:700" id="currentBoardTitleHeader">Tablica lekcyjna</div>
+        <button class="tool" onclick="goHome()">← Foldery</button>
+        <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="currentBoardTitleHeader">Tablica</div>
+        <span style="font-size:12px;color:var(--gold2);background:#262015;padding:3px 8px;border-radius:6px;white-space:nowrap" id="currentBoardFolderBadge">📁 Folder</span>
         <div class="status-pill">
           <span class="dot" id="liveDot"></span>
           <span id="liveText">Łączenie...</span>
         </div>
       </div>
-      <div>
-        <button class="goldbtn" id="copyBoardLinkBtn" style="padding:6px 12px;font-size:13px">🔗 Kopiuj link do tej tablicy</button>
+      <div style="display:flex;gap:8px">
+        <button class="goldbtn" id="copyBoardLinkBtn" style="padding:6px 12px;font-size:13px">📤 Udostępnij uczniowi (Kopiuj link)</button>
       </div>
     </header>
 
@@ -164,7 +200,6 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
         <div class="paper" id="paperBox">
           <canvas id="whiteboard"></canvas>
 
-          <!-- ETUTI STYLE FLOATING MATH TOOLBAR (Pojawia się podczas pisania tekstu) -->
           <div class="floating-math-toolbar" id="floatingMathToolbar" style="display:none">
             <span style="font-size:11px;color:var(--muted)">Wzory:</span>
             <button class="f-btn" type="button" onclick="insertSnippet('\\frac{a}{b}')">a/b</button>
@@ -175,7 +210,7 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
             <button class="f-btn" type="button" onclick="insertSnippet('\\int')">∫</button>
             <button class="f-btn" type="button" onclick="insertSnippet('\\infty')">∞</button>
             <span style="color:var(--line)">|</span>
-            <button class="goldbtn" style="padding:3px 8px;font-size:12px" onclick="commitInlineText()">✓ Zapisz tekst (Enter)</button>
+            <button class="goldbtn" style="padding:3px 8px;font-size:12px" onclick="commitInlineText()">✓ Zapisz (Ctrl+Enter)</button>
           </div>
 
           <div class="remote-cursor" id="remoteCursor">
@@ -194,12 +229,14 @@ canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
           <button class="tool" id="deletePage" style="width:100%;margin-top:5px">Usuń</button>
         </div>
         <div style="font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px">
-          Automatyczny zapis zmian w tle.
+          Tablica zapisuje się automatycznie w folderze nauczyciela i ucznia.
         </div>
       </aside>
     </div>
   </div>
 </div>
+
+<div class="toast" id="toastMsg"></div>
 
 <script>
 const DEFAULT_FOLDERS = [
@@ -208,17 +245,49 @@ const DEFAULT_FOLDERS = [
   { id: 'domowe', name: 'Zadania Domowe i Powtórki' }
 ];
 
+function getFolderName(folderId){
+  const f = DEFAULT_FOLDERS.find(x => x.id === folderId);
+  return f ? f.name : 'Matematyka Podstawowa';
+}
+
+function showToast(text){
+  const el = document.getElementById('toastMsg');
+  el.textContent = text;
+  el.style.display = 'block';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
 function getStoredBoards(){
   try {
-    const data = localStorage.getItem('matplus_boards');
+    const data = localStorage.getItem('matplus_boards_v2');
     return data ? JSON.parse(data) : [
-      { id: 'demo-1', title: 'Powtórzenie do matury - Funkcja kwadratowa', folder: 'podstawa', date: '2026-06-01', pages: [{id:'p1', type:'grid', items:[]}] }
+      { id: 'demo-1', title: 'Powtórzenie do matury - Funkcja kwadratowa', folder: 'podstawa', date: '2026-11-13', pages: [{id:'p1', type:'grid', items:[]}], currentPage: 0 }
     ];
   } catch(e) { return []; }
 }
 
 function saveStoredBoards(boards){
-  localStorage.setItem('matplus_boards', JSON.stringify(boards));
+  localStorage.setItem('matplus_boards_v2', JSON.stringify(boards));
+}
+
+/* GENEROWANIE LINKU Z METADANYMI (ID + TYTUŁ + FOLDER) ABY UCZEŃ WIDZIAŁ TABLICĘ W SWOIM FOLDERZE */
+function buildShareUrl(board){
+  const url = new URL(window.location.origin + window.location.pathname);
+  url.searchParams.set('board', board.id);
+  url.searchParams.set('title', board.title);
+  url.searchParams.set('folder', board.folder);
+  return url.toString();
+}
+
+function copyShareLinkForBoard(boardId){
+  const boards = getStoredBoards();
+  const b = boards.find(x => x.id === boardId);
+  if(!b) return;
+  const link = buildShareUrl(b);
+  navigator.clipboard.writeText(link).then(() => {
+    showToast('✓ Skopiowano link! Po otwarciu tablica zapisze się w folderze ucznia: ' + getFolderName(b.folder));
+  });
 }
 
 let currentTab = 'teacher';
@@ -228,7 +297,10 @@ function switchDashTab(tab){
     el.classList.toggle('active', (i === 0 && tab === 'teacher') || (i === 1 && tab === 'student'));
   });
   document.getElementById('dashTitle').textContent = tab === 'teacher' ? 'Panel Nauczyciela' : 'Strefa Ucznia';
-  document.getElementById('dashSubtitle').textContent = tab === 'teacher' ? 'Zarządzaj swoimi tablicami i materiałami.' : 'Przeglądaj materiały z lekcji i archiwalne tablice.';
+  document.getElementById('dashSubtitle').textContent = tab === 'teacher'
+    ? 'Twórz tablice w folderach i udostępniaj je uczniom jednym kliknięciem.'
+    : 'Wszystkie udostępnione tablice lekcyjne zapisane w odpowiednich folderach.';
+  document.getElementById('newBoardMainBtn').style.display = tab === 'teacher' ? 'inline-block' : 'none';
   renderDashboard();
 }
 
@@ -248,10 +320,11 @@ function renderDashboard(){
         ${folderBoards.map(b => `
           <div class="board-card">
             <h4>${b.title}</h4>
-            <div class="date">Utworzono: ${b.date}</div>
+            <div class="date">Data: ${b.date} • Stron: ${(b.pages || []).length}</div>
             <div class="card-actions">
               <button class="goldbtn" style="padding:6px 12px;font-size:12px;flex:1" onclick="openBoard('${b.id}')">Otwórz tablicę</button>
-              ${currentTab === 'teacher' ? `<button class="tool" style="padding:6px 10px;font-size:12px" onclick="deleteBoard('${b.id}')">Usuń</button>` : ''}
+              <button class="tool" style="padding:6px 10px;font-size:12px" onclick="copyShareLinkForBoard('${b.id}')" title="Skopiuj link do udostępnienia uczniowi">📤 Udostępnij</button>
+              ${currentTab === 'teacher' ? `<button class="tool" style="padding:6px 10px;font-size:12px;color:var(--red)" onclick="deleteBoard('${b.id}')">✕</button>` : ''}
             </div>
           </div>
         `).join('')}
@@ -261,16 +334,34 @@ function renderDashboard(){
   });
 }
 
-function createNewBoardModal(){
-  const title = prompt('Podaj tytuł nowej lekcji / tablicy:', 'Lekcja maturalna - ');
-  if(!title) return;
-  const folder = prompt('Wybierz folder (wpisz ID):\n1. podstawa\n2. rozszerzenie\n3. domowe', 'podstawa');
-  const targetFolder = DEFAULT_FOLDERS.some(f => f.id === folder) ? folder : 'podstawa';
+function openCreateModal(){
+  document.getElementById('newBoardTitle').value = '';
+  document.getElementById('createModal').classList.add('open');
+  document.getElementById('newBoardTitle').focus();
+}
 
-  const newId = 'board-' + Math.random().toString(36.2).substring(2, 10);
+function closeCreateModal(){
+  document.getElementById('createModal').classList.remove('open');
+}
+
+function confirmCreateBoard(){
+  const rawTitle = document.getElementById('newBoardTitle').value.trim();
+  const title = rawTitle || ('Lekcja ' + new Date().toLocaleDateString('pl-PL'));
+  const folder = document.getElementById('newBoardFolder').value;
+
+  const newId = 'board-' + Math.random().toString(36).substring(2, 10);
   const boards = getStoredBoards();
-  boards.push({ id: newId, title, folder: targetFolder, date: new Date().toISOString().split('T')[0], pages: [{id: 'p1', type: 'grid', items: []}], currentPage: 0 });
+  const newBoard = {
+    id: newId,
+    title: title,
+    folder: folder,
+    date: new Date().toISOString().split('T')[0],
+    pages: [{id: 'p1', type: 'grid', items: []}],
+    currentPage: 0
+  };
+  boards.push(newBoard);
   saveStoredBoards(boards);
+  closeCreateModal();
   openBoard(newId);
 }
 
@@ -291,24 +382,42 @@ function goHome(){
 
 /* TABLICA I PISANIE W STYLU WORD / ETUTI BEZPOŚREDNIE NA PŁÓTNIE */
 let activeBoardId = null, pages = [], page = 0, tool = 'pen', drawing = false, current = null, remoteActiveItem = null, laserPoints = [], redoStack = [];
-let activeInlineEditor = null; // element edytora tekstowego na żywo
+let activeInlineEditor = null;
 
-function openBoard(id){
+function openBoard(id, metaFromUrl = null){
   activeBoardId = id;
-  const boards = getStoredBoards();
-  const bData = boards.find(b => b.id === id);
-  if(!bData) return;
+  let boards = getStoredBoards();
+  let bData = boards.find(b => b.id === id);
+
+  // Jeśli uczeń otwiera link do tablicy pierwszy raz, automatycznie zapisujemy ją w jego folderze!
+  if(!bData){
+    bData = {
+      id: id,
+      title: metaFromUrl?.title || 'Udostępniona tablica lekcyjna',
+      folder: DEFAULT_FOLDERS.some(f => f.id === metaFromUrl?.folder) ? metaFromUrl.folder : 'podstawa',
+      date: new Date().toISOString().split('T')[0],
+      pages: [{id: 'p1', type: 'grid', items: []}],
+      currentPage: 0
+    };
+    boards.push(bData);
+    saveStoredBoards(boards);
+    showToast('📁 Zapisano tablicę w Twojej Strefie Ucznia (' + getFolderName(bData.folder) + ')');
+  } else if(metaFromUrl?.title){
+    // Aktualizacja tytułu/folderu jeśli zmieniły się w linku
+    bData.title = metaFromUrl.title;
+    if(DEFAULT_FOLDERS.some(f => f.id === metaFromUrl.folder)) bData.folder = metaFromUrl.folder;
+    saveStoredBoards(boards);
+  }
 
   document.getElementById('currentBoardTitleHeader').textContent = bData.title;
+  document.getElementById('currentBoardFolderBadge').textContent = '📁 ' + getFolderName(bData.folder);
   pages = bData.pages || [{id: 'p1', type: 'grid', items: []}];
   page = bData.currentPage || 0;
 
   document.getElementById('dashboardView').classList.remove('active');
   document.getElementById('boardView').classList.add('active');
 
-  const url = new URL(window.location.href);
-  url.searchParams.set('board', id);
-  window.history.replaceState({}, '', url);
+  window.history.replaceState({}, '', buildShareUrl(bData));
 
   setTimeout(() => { resizeCanvas(); renderPages(); render(); initLivePeer(id); }, 50);
 }
@@ -317,15 +426,15 @@ function saveCurrentBoardData(){
   if(!activeBoardId) return;
   const boards = getStoredBoards();
   const idx = boards.findIndex(b => b.id === activeBoardId);
-  if(idx !== -1){ boards[idx].pages = pages; boards[idx].currentPage = page; saveStoredBoards(boards); }
+  if(idx !== -1){
+    boards[idx].pages = pages;
+    boards[idx].currentPage = page;
+    saveStoredBoards(boards);
+  }
 }
 
 document.getElementById('copyBoardLinkBtn').onclick = () => {
-  navigator.clipboard.writeText(window.location.href).then(() => {
-    const btn = document.getElementById('copyBoardLinkBtn');
-    btn.textContent = '✓ Skopiowano link!';
-    setTimeout(() => btn.textContent = '🔗 Kopiuj link do tej tablicy', 2000);
-  });
+  if(activeBoardId) copyShareLinkForBoard(activeBoardId);
 };
 
 const canvas = document.getElementById('whiteboard');
@@ -477,7 +586,6 @@ canvas.addEventListener('pointerdown', e => {
   render();
 });
 
-/* WBUDOWANY EDYTOR BEZPOŚREDNIE NA PŁÓTNIE JAK ETUTI / WORD */
 function createInlineEditor(nx, ny){
   const {w, h} = dimensions();
   const div = document.createElement('div');
@@ -628,12 +736,49 @@ document.getElementById('deletePage').onclick = () => {
   broadcast({type: 'full_sync', pages, page}); renderPages(); render();
 };
 
+/* DODAWANIE ZDJĘĆ */
+function handleImageFile(file){
+  if(!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 1100;
+      let tw = img.width, th = img.height;
+      if(tw > maxDim || th > maxDim){
+        const r = Math.min(maxDim / tw, maxDim / th);
+        tw = Math.round(tw * r); th = Math.round(th * r);
+      }
+      const off = document.createElement('canvas');
+      off.width = tw; off.height = th;
+      off.getContext('2d').drawImage(img, 0, 0, tw, th);
+      const src = off.toDataURL('image/jpeg', 0.85);
+      const {w, h} = dimensions();
+      const fit = Math.min((w * 0.75) / tw, (h * 0.75) / th, 1);
+      const item = {id: uid(), kind: 'image', src, nx: 0.04, ny: 0.04, nw: (tw * fit) / w, nh: (th * fit) / h};
+      pages[page].items.push(item);
+      broadcast({type: 'item_commit', pageIndex: page, item});
+      renderPages(); render();
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+document.getElementById('imageBtn').onclick = () => document.getElementById('imageInput').click();
+document.getElementById('imageInput').onchange = e => { handleImageFile(e.target.files[0]); e.target.value = ''; };
+window.addEventListener('paste', e => {
+  if(!document.getElementById('boardView').classList.contains('active')) return;
+  for(const it of (e.clipboardData?.items || [])){
+    if(it.type.startsWith('image/')){ handleImageFile(it.getAsFile()); break; }
+  }
+});
+
 document.getElementById('downloadBtn').onclick = () => {
   if(activeInlineEditor) commitInlineText();
   const a = document.createElement('a'); a.download = 'tablica.png'; a.href = canvas.toDataURL('image/png'); a.click();
 };
 
-/* P2P LIVE SYNC */
+/* P2P LIVE SYNC + SYNCHRONIZACJA FOLDERÓW */
 let peer = null, connections = [], isHost = false;
 const remoteCursorEl = document.getElementById('remoteCursor');
 
@@ -664,7 +809,15 @@ function setupConnection(conn){
   connections.push(conn);
   conn.on('open', () => {
     setLiveStatus('online', 'LIVE (Połączono)');
-    if(isHost) conn.send({type: 'full_sync', pages, page});
+    if(isHost){
+      const currentBoard = getStoredBoards().find(b => b.id === activeBoardId);
+      conn.send({
+        type: 'full_sync',
+        pages,
+        page,
+        boardMeta: currentBoard ? { id: currentBoard.id, title: currentBoard.title, folder: currentBoard.folder, date: currentBoard.date } : null
+      });
+    }
   });
   conn.on('data', msg => {
     if(!msg || !msg.type) return;
@@ -690,6 +843,19 @@ function setupConnection(conn){
     } else if(msg.type === 'full_sync'){
       pages = msg.pages; page = Math.min(msg.page, pages.length - 1);
       document.getElementById('paperType').value = pages[page].type;
+      if(msg.boardMeta){
+        document.getElementById('currentBoardTitleHeader').textContent = msg.boardMeta.title;
+        document.getElementById('currentBoardFolderBadge').textContent = '📁 ' + getFolderName(msg.boardMeta.folder);
+        const boards = getStoredBoards();
+        const idx = boards.findIndex(b => b.id === msg.boardMeta.id);
+        if(idx !== -1){
+          boards[idx].title = msg.boardMeta.title;
+          boards[idx].folder = msg.boardMeta.folder;
+          boards[idx].pages = pages;
+          boards[idx].currentPage = page;
+          saveStoredBoards(boards);
+        }
+      }
       renderPages(); render();
     }
   });
@@ -704,8 +870,14 @@ window.addEventListener('resize', resizeCanvas);
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const boardParam = urlParams.get('board');
-  if(boardParam){ openBoard(boardParam); }
-  else { renderDashboard(); }
+  if(boardParam){
+    openBoard(boardParam, {
+      title: urlParams.get('title'),
+      folder: urlParams.get('folder')
+    });
+  } else {
+    renderDashboard();
+  }
 });
 </script>
 </body>

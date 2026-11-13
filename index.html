@@ -368,11 +368,28 @@ function confirmCreateBoard(){
   openBoard(newId);
 }
 
+// ==========================================
+// USUWANIE TABLICY Z PYTANIEM O STREFĘ UCZNIA
+// ==========================================
 function deleteBoard(id){
   if(isStudentMode) return;
-  if(confirm('Usunąć tę tablicę?')){
-    saveStoredBoards(getStoredBoards().filter(b => b.id !== id));
+  if(confirm('Usunąć tę tablicę z panelu nauczyciela?')){
+    const deleteFromStudent = confirm('Czy chcesz usunąć tę tablicę także ze Strefy Ucznia?');
+
+    // Usuwamy u nauczyciela
+    const boards = getStoredBoards().filter(b => b.id !== id);
+    saveStoredBoards(boards);
     renderDashboard();
+
+    // Jeśli nauczyciel zaznaczył, że chce usunąć też u ucznia
+    if(deleteFromStudent){
+      broadcast({ type: 'delete_board', boardId: id });
+      // Wyślij też odświeżoną pełną listę, aby zsynchronizować stan
+      broadcast({ type: 'sync_all_boards', allBoards: boards });
+      showToast('Usunięto tablicę z Panelu Nauczyciela oraz ze Strefy Ucznia.');
+    } else {
+      showToast('Usunięto tablicę tylko z Panelu Nauczyciela.');
+    }
   }
 }
 
@@ -831,7 +848,7 @@ document.getElementById('downloadBtn').onclick = () => {
   const a = document.createElement('a'); a.download = 'tablica.png'; a.href = canvas.toDataURL('image/png'); a.click();
 };
 
-/* P2P LIVE SYNC + AUTOMATYCZNA SYNCHRONIZACJA WSZYSTKICH TABLIC */
+/* P2P LIVE SYNC + SYNCHRONIZACJA FOLDERÓW I USUNIĘĆ */
 let peer = null, connections = [];
 const remoteCursorEl = document.getElementById('remoteCursor');
 
@@ -864,7 +881,6 @@ function setupConnection(conn){
     setLiveStatus('online', 'LIVE (Połączono)');
     const currentBoard = getStoredBoards().find(b => b.id === activeBoardId);
     
-    // 1. Synchronizacja aktywnej tablicy na żywo
     conn.send({
       type: 'full_sync',
       pages,
@@ -872,7 +888,6 @@ function setupConnection(conn){
       boardMeta: currentBoard ? { id: currentBoard.id, title: currentBoard.title, folder: currentBoard.folder, date: currentBoard.date } : null
     });
 
-    // 2. KLUCZOWE: Automatyczne przesłanie WSZYSTKICH Twoich tablic i folderów do ucznia
     conn.send({
       type: 'sync_all_boards',
       allBoards: getStoredBoards()
@@ -900,20 +915,21 @@ function setupConnection(conn){
       if(pages[msg.pageIndex]){ page = msg.pageIndex; document.getElementById('paperType').value = pages[page].type; renderPages(); render(); }
     } else if(msg.type === 'paper_type'){
       if(pages[msg.pageIndex]){ pages[msg.pageIndex].type = msg.paperType; if(msg.pageIndex === page) document.getElementById('paperType').value = msg.paperType; renderPages(); render(); }
+    } else if(msg.type === 'delete_board'){
+      // Otrzymanie żądania usunięcia tablicy po stronie ucznia
+      if(msg.boardId){
+        const filtered = getStoredBoards().filter(b => b.id !== msg.boardId);
+        saveStoredBoards(filtered);
+        showToast('Nauczyciel usunął tę tablicę.');
+        if(activeBoardId === msg.boardId){
+          goHome();
+        } else if(document.getElementById('dashboardView').classList.contains('active')){
+          renderDashboard();
+        }
+      }
     } else if(msg.type === 'sync_all_boards'){
-      // Otrzymanie pełnej listy tablic od nauczyciela (działa po stronie ucznia)
       if(msg.allBoards && Array.isArray(msg.allBoards)){
-        const localBoards = getStoredBoards();
-        const merged = [...localBoards];
-        msg.allBoards.forEach(b => {
-          const existingIdx = merged.findIndex(x => x.id === b.id);
-          if(existingIdx !== -1){
-            merged[existingIdx] = b;
-          } else {
-            merged.push(b);
-          }
-        });
-        saveStoredBoards(merged);
+        saveStoredBoards(msg.allBoards);
         if(document.getElementById('dashboardView').classList.contains('active')){
           renderDashboard();
         }

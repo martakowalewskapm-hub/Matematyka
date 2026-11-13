@@ -277,7 +277,7 @@ function buildShareUrl(board){
   url.searchParams.set('board', board.id);
   url.searchParams.set('title', board.title);
   url.searchParams.set('folder', board.folder);
-  url.searchParams.set('role', 'student'); // Oznaczamy link jako link dla ucznia
+  url.searchParams.set('role', 'student');
   return url.toString();
 }
 
@@ -295,7 +295,7 @@ function applyRoleUI(){
   if(isStudentMode){
     document.getElementById('dashBrandTitle').innerHTML = 'MATEMATYKA<span>+</span> | Strefa Ucznia';
     document.getElementById('dashTitle').textContent = 'Twoje materiały i tablice z lekcji';
-    document.getElementById('dashSubtitle').textContent = 'Przeglądaj materiały udostępnione przez nauczyciela.';
+    document.getElementById('dashSubtitle').textContent = 'Przeglądaj wszystkie udostępnione przez nauczyciela tablice.';
     document.getElementById('newBoardMainBtn').style.display = 'none';
   } else {
     document.getElementById('dashBrandTitle').innerHTML = 'MATEMATYKA<span>+</span> | Panel Nauczyciela';
@@ -379,7 +379,6 @@ function deleteBoard(id){
 function goHome(){
   if(peer) peer.destroy();
   if(isStudentMode){
-    // Uczeń po powrocie zostaje w Strefie Ucznia, usuwamy parametry z URL zachowując rolę
     const url = new URL(window.location.origin + window.location.pathname);
     url.searchParams.set('role', 'student');
     window.history.replaceState({}, '', url);
@@ -420,8 +419,6 @@ function openBoard(id, metaFromUrl = null){
 
   document.getElementById('currentBoardTitleHeader').textContent = bData.title;
   document.getElementById('currentBoardFolderBadge').textContent = '📁 ' + getFolderName(bData.folder);
-  
-  // Ukryj przycisk udostępniania dla ucznia
   document.getElementById('copyBoardLinkBtn').style.display = isStudentMode ? 'none' : 'inline-block';
 
   pages = bData.pages || [{id: 'p1', type: 'grid', items: []}];
@@ -834,7 +831,7 @@ document.getElementById('downloadBtn').onclick = () => {
   const a = document.createElement('a'); a.download = 'tablica.png'; a.href = canvas.toDataURL('image/png'); a.click();
 };
 
-/* P2P LIVE SYNC */
+/* P2P LIVE SYNC + AUTOMATYCZNA SYNCHRONIZACJA WSZYSTKICH TABLIC */
 let peer = null, connections = [];
 const remoteCursorEl = document.getElementById('remoteCursor');
 
@@ -866,11 +863,19 @@ function setupConnection(conn){
   conn.on('open', () => {
     setLiveStatus('online', 'LIVE (Połączono)');
     const currentBoard = getStoredBoards().find(b => b.id === activeBoardId);
+    
+    // 1. Synchronizacja aktywnej tablicy na żywo
     conn.send({
       type: 'full_sync',
       pages,
       page,
       boardMeta: currentBoard ? { id: currentBoard.id, title: currentBoard.title, folder: currentBoard.folder, date: currentBoard.date } : null
+    });
+
+    // 2. KLUCZOWE: Automatyczne przesłanie WSZYSTKICH Twoich tablic i folderów do ucznia
+    conn.send({
+      type: 'sync_all_boards',
+      allBoards: getStoredBoards()
     });
   });
 
@@ -895,6 +900,24 @@ function setupConnection(conn){
       if(pages[msg.pageIndex]){ page = msg.pageIndex; document.getElementById('paperType').value = pages[page].type; renderPages(); render(); }
     } else if(msg.type === 'paper_type'){
       if(pages[msg.pageIndex]){ pages[msg.pageIndex].type = msg.paperType; if(msg.pageIndex === page) document.getElementById('paperType').value = msg.paperType; renderPages(); render(); }
+    } else if(msg.type === 'sync_all_boards'){
+      // Otrzymanie pełnej listy tablic od nauczyciela (działa po stronie ucznia)
+      if(msg.allBoards && Array.isArray(msg.allBoards)){
+        const localBoards = getStoredBoards();
+        const merged = [...localBoards];
+        msg.allBoards.forEach(b => {
+          const existingIdx = merged.findIndex(x => x.id === b.id);
+          if(existingIdx !== -1){
+            merged[existingIdx] = b;
+          } else {
+            merged.push(b);
+          }
+        });
+        saveStoredBoards(merged);
+        if(document.getElementById('dashboardView').classList.contains('active')){
+          renderDashboard();
+        }
+      }
     } else if(msg.type === 'full_sync'){
       if(msg.pages && msg.pages.length > 0){
         pages = msg.pages; 

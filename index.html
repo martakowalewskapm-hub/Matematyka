@@ -368,23 +368,17 @@ function confirmCreateBoard(){
   openBoard(newId);
 }
 
-// ==========================================
-// USUWANIE TABLICY Z PYTANIEM O STREFĘ UCZNIA
-// ==========================================
 function deleteBoard(id){
   if(isStudentMode) return;
   if(confirm('Usunąć tę tablicę z panelu nauczyciela?')){
     const deleteFromStudent = confirm('Czy chcesz usunąć tę tablicę także ze Strefy Ucznia?');
 
-    // Usuwamy u nauczyciela
     const boards = getStoredBoards().filter(b => b.id !== id);
     saveStoredBoards(boards);
     renderDashboard();
 
-    // Jeśli nauczyciel zaznaczył, że chce usunąć też u ucznia
     if(deleteFromStudent){
       broadcast({ type: 'delete_board', boardId: id });
-      // Wyślij też odświeżoną pełną listę, aby zsynchronizować stan
       broadcast({ type: 'sync_all_boards', allBoards: boards });
       showToast('Usunięto tablicę z Panelu Nauczyciela oraz ze Strefy Ucznia.');
     } else {
@@ -417,6 +411,13 @@ function openBoard(id, metaFromUrl = null){
   let bData = boards.find(b => b.id === id);
 
   if(!bData){
+    // Jeśli uczeń próbuje otworzyć tablicę, która została usunięta lub nie istnieje, NIE odtwarzaj jej!
+    if(isStudentMode){
+      showToast('⚠ Ta tablica została usunięta przez nauczyciela.');
+      goHome();
+      return;
+    }
+
     bData = {
       id: id,
       title: metaFromUrl?.title || 'Tablica lekcyjna',
@@ -428,7 +429,7 @@ function openBoard(id, metaFromUrl = null){
     boards.push(bData);
     saveStoredBoards(boards);
     showToast('📁 Zapisano tablicę w Strefie Ucznia (' + getFolderName(bData.folder) + ')');
-  } else if(metaFromUrl?.title){
+  } else if(metaFromUrl?.title && !isStudentMode){
     bData.title = metaFromUrl.title;
     if(DEFAULT_FOLDERS.some(f => f.id === metaFromUrl.folder)) bData.folder = metaFromUrl.folder;
     saveStoredBoards(boards);
@@ -453,7 +454,7 @@ function openBoard(id, metaFromUrl = null){
 }
 
 function saveCurrentBoardData(){
-  if(!activeBoardId) return;
+  if(!activeBoardId || isStudentMode) return; // Uczeń nie nadpisuje bazy nauczyciela
   const boards = getStoredBoards();
   const idx = boards.findIndex(b => b.id === activeBoardId);
   if(idx !== -1){
@@ -916,7 +917,6 @@ function setupConnection(conn){
     } else if(msg.type === 'paper_type'){
       if(pages[msg.pageIndex]){ pages[msg.pageIndex].type = msg.paperType; if(msg.pageIndex === page) document.getElementById('paperType').value = msg.paperType; renderPages(); render(); }
     } else if(msg.type === 'delete_board'){
-      // Otrzymanie żądania usunięcia tablicy po stronie ucznia
       if(msg.boardId){
         const filtered = getStoredBoards().filter(b => b.id !== msg.boardId);
         saveStoredBoards(filtered);
